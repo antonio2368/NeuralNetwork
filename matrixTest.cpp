@@ -20,4 +20,5 @@ int main()
     std::cout << "First row: " << testMatrix.getRow( 0 ) << '\n';
     std::cout << "Second column: " << testMatrix.getColumn( 1 ) << '\n';
     std::cout << "Matrix:\n" << testMatrix << '\n';
+    std::cout << "Matrix + Matrix:\n" << testMatrix + testMatrix << '\n';
 }
