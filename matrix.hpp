@@ -49,12 +49,38 @@ public:
 
     double max() const noexcept;
 
+    constexpr std::array< double, N2 > getRow( std::size_t index ) const noexcept;
+
+    constexpr std::array< double, N1 > getColumn( std::size_t index ) const noexcept;
+
     template< std::size_t K >
     friend std::ostream& operator<<( std::ostream&, std::array< double, K > const& );
 
     template< int K1, int K2 >
     friend std::ostream& operator<<( std::ostream&, Matrix< K1, K2 > const& );
 };
+
+template< int N1, int N2 >
+constexpr std::array< double, N1 > Matrix< N1, N2 >::getColumn( std::size_t index ) const noexcept
+{
+    assert( index < N2 );
+
+    std::array< double, N1 > result;
+
+    std::transform( data.begin(), data.end(), result.begin(), [ &index ]( auto row )
+    {
+        return row[ index ];
+    });
+
+    return result;
+}
+
+template< int N1, int N2 >
+constexpr std::array< double, N2 > Matrix< N1, N2 >::getRow( std::size_t index ) const noexcept
+{
+    assert( index < N1 );
+    return data[ index ];
+}
 
 template< int N1, int N2 >
 double Matrix< N1, N2 >::max() const noexcept

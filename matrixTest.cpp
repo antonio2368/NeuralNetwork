@@ -17,5 +17,7 @@ int main()
     std::cout << "Row num: " << testMatrix.getRowNum() << '\n';
     std::cout << "Col num: " << testMatrix.getColNum() << '\n';
     std::cout << "Max elem: " << testMatrix.max() << '\n';
-    std::cout << testMatrix;
+    std::cout << "First row: " << testMatrix.getRow( 0 ) << '\n';
+    std::cout << "Second column: " << testMatrix.getColumn( 1 ) << '\n';
+    std::cout << "Matrix:\n" << testMatrix << '\n';
 }
