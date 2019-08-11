@@ -13,12 +13,15 @@ private:
     using T2 = typename std::iterator_traits< SecondIterator >::reference;
 
     FirstIterator firstIt;
+    FirstIterator firstItEnd;
     SecondIterator secondIt;
+    SecondIterator secondItEnd;
     std::optional< std::pair< T1, T2 > > pair;
 
 public:
-    ZipIterator( FirstIterator const& firstIt, SecondIterator const& secondIt ) 
-        : firstIt{ firstIt }, secondIt{ secondIt }
+    ZipIterator( FirstIterator const& firstIt, FirstIterator const& firstItEnd, 
+                 SecondIterator const& secondIt, SecondIterator const& secondItEnd ) 
+        : firstIt{ firstIt }, firstItEnd{ firstItEnd }, secondIt{ secondIt }, secondItEnd{ secondItEnd }
     {
     }
 
@@ -57,6 +60,11 @@ public:
         }
 
         return pair.value();
+    }
+    
+    bool isEnd() const noexcept 
+    {
+        return firstIt == firstItEnd || secondIt == secondItEnd;
     }
 };
 

@@ -161,16 +161,14 @@ void Matrix< N1, N2 >::createMatrixFromCollection( RowCollection< ColumnCollecti
         )
     );
 
-    ZipIterator rowIter{ data.begin(), rows.begin() };
-    ZipIterator rowIterEnd{ data.end(), rows.end() };
+    ZipIterator rowIter{ data.begin(), data.end(), rows.begin(), rows.end() };
 
-    while ( rowIter != rowIterEnd )
+    while ( !rowIter.isEnd() )
     {
         auto rowPair = (*rowIter);
-        ZipIterator dataIter{ rowPair.first.begin(), rowPair.second.begin() };
-        ZipIterator dataIterEnd{ rowPair.first.end(), rowPair.second.end() };
+        ZipIterator dataIter{ rowPair.first.begin(), rowPair.first.end(), rowPair.second.begin(), rowPair.second.end() };
 
-        while( dataIter != dataIterEnd )
+        while( !dataIter.isEnd() )
         {
             (*dataIter).first = (*dataIter).second;
 
