@@ -22,14 +22,19 @@ class Matrix
     static_assert( N1 > 0 && N2 > 0, "Dimension must be positive integers." );
 
 private:
+    template< int K1, int K2 >
+    using MatrixData = std::array< std::array< double, K2 >, K1 >;
 
-    std::array< std::array< double, N2 >, N1 > data;
+    MatrixData< N1, N2 > data;
 
     template< template< typename > class RowCollection, 
               template< typename > class ColumnCollection >
     void createMatrixFromCollection( RowCollection< ColumnCollection< double > > const&  );
 public:
     Matrix();
+
+    Matrix( MatrixData< N1, N2 >&& data ) : data{ data }
+    {}
 
     template< template< typename > class RowCollection, 
               template< typename > class ColumnCollection >
@@ -53,15 +58,66 @@ public:
 
     constexpr std::array< double, N1 > getColumn( std::size_t index ) const noexcept;
 
+    constexpr Matrix< N2, N1 > getTranspose() const noexcept;
+
     template< int K1, int K2 >
     friend constexpr Matrix< K1, K2 > operator+( Matrix< K1, K2 > lhs, const Matrix< K1, K2 >& rhs );
+
+    template< int K1, int K2, int K3 >
+    friend constexpr Matrix< K1, K3 > operator*( Matrix< K1, K2 > lhs, const Matrix< K2, K3 >& rhs );
 
     template< std::size_t K >
     friend std::ostream& operator<<( std::ostream&, std::array< double, K > const& );
 
     template< int K1, int K2 >
     friend std::ostream& operator<<( std::ostream&, Matrix< K1, K2 > const& );
+
+    template< int, int >
+    friend class Matrix;
 };
+
+template< int N1, int N2 >
+constexpr Matrix< N2, N1 > Matrix< N1, N2 >::getTranspose() const noexcept
+{
+    Matrix< N2, N1 > result;
+
+    for ( std::size_t i = 0; i < N2; ++i )
+    {
+        auto column = getColumn( i );
+        for ( std::size_t j = 0; j < N1; ++j )
+        {
+            result.data[ i ][ j ] = column[ j ];
+        }
+    }
+
+    return result;
+
+}
+
+template< int N1, int N2, int N3 >
+constexpr Matrix< N1, N3 > operator*( Matrix< N1, N2 > lhs, const Matrix< N2, N3 >& rhs )
+{
+    Matrix< N1, N3 > result;
+
+    for ( std::size_t i = 0; i < N1; ++i )
+    {
+        for  ( std::size_t j = 0; j < N3; ++ j )
+        {
+            auto& row = lhs.data[ i ];
+            auto column = rhs.getColumn( j );
+
+            ZipIterator zipIter{ row.begin(), row.end(), column.begin(), column.end() };
+
+            while ( !zipIter.isEnd() )
+            {
+                result.data[ i ][ j ] += ( *zipIter ).first * ( *zipIter ).second;
+                ++zipIter;
+            }
+        }
+    }
+
+    return result;
+}
 
 template< int N1, int N2 >
 constexpr Matrix< N1, N2 > operator+( Matrix< N1, N2 > lhs, const Matrix< N1, N2 >& rhs )

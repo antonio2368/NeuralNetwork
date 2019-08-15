@@ -14,11 +14,15 @@ int main()
         } 
     };
 
+    Matrix< 2, 3 > transpose = testMatrix.getTranspose();
+
     std::cout << "Row num: " << testMatrix.getRowNum() << '\n';
     std::cout << "Col num: " << testMatrix.getColNum() << '\n';
     std::cout << "Max elem: " << testMatrix.max() << '\n';
     std::cout << "First row: " << testMatrix.getRow( 0 ) << '\n';
     std::cout << "Second column: " << testMatrix.getColumn( 1 ) << '\n';
     std::cout << "Matrix:\n" << testMatrix << '\n';
+    std::cout << "Transpose\n" << transpose << '\n';
     std::cout << "Matrix + Matrix:\n" << testMatrix + testMatrix << '\n';
+    std::cout << "Matrix * Matrix:\n" << testMatrix * transpose << '\n';
 }
