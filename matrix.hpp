@@ -1,5 +1,5 @@
 #ifndef MATRIX_H
-#define MATRIX_
+#define MATRIX_H
 
 #include "zip.hpp"
 
