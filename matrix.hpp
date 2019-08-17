@@ -10,6 +10,9 @@
 #include <iostream>
 #include <iomanip>
 
+template< int N1, int N2 >
+class Matrix;
+
 namespace
 {
     constexpr int doublePrecision = 5;
@@ -30,6 +33,9 @@ private:
     template< template< typename > class RowCollection, 
               template< typename > class ColumnCollection >
     void createMatrixFromCollection( RowCollection< ColumnCollection< double > > const&  );
+
+    template< int K1, int K2, typename Function >
+    friend constexpr Matrix< K1, K2 > matrixOperation( Matrix< K1, K2 > const& lhs, Matrix< K1, K2 > const& rhs, Function operation );
 public:
     Matrix();
 
@@ -61,10 +67,19 @@ public:
     constexpr Matrix< N2, N1 > getTranspose() const noexcept;
 
     template< int K1, int K2 >
+    friend constexpr Matrix< K1, K2 > operator-( Matrix< K1, K2 > lhs, const Matrix< K1, K2 >& rhs );
+
+    template< int K1, int K2 >
     friend constexpr Matrix< K1, K2 > operator+( Matrix< K1, K2 > lhs, const Matrix< K1, K2 >& rhs );
 
     template< int K1, int K2, int K3 >
     friend constexpr Matrix< K1, K3 > operator*( Matrix< K1, K2 > lhs, const Matrix< K2, K3 >& rhs );
+
+    template< int K1, int K2 >
+    friend constexpr Matrix< K1, K2 > operator*( Matrix< K1, K2 > const& lhs, double scalar );
+
+    template< int K1, int K2 >
+    friend constexpr Matrix< K1, K2 > operator*( double scalar, Matrix< K1, K2 > const& lhs );
 
     template< std::size_t K >
     friend std::ostream& operator<<( std::ostream&, std::array< double, K > const& );
@@ -75,6 +90,28 @@ public:
     template< int, int >
     friend class Matrix;
 };
+
+template< int N1, int N2 >
+constexpr Matrix< N1, N2 > operator*( Matrix< N1, N2 > const& lhs, double scalar )
+{
+    Matrix< N1, N2 > result;
+
+    for ( std::size_t i = 0; i < N1; ++i )
+    {
+        for ( std::size_t j = 0; j < N2; ++j )
+        {
+            result.data[ i ][ j ] = lhs.data[ i ][ j ] * scalar;
+        }
+    }
+
+    return result;
+}
+
+template< int N1, int N2 >
+constexpr Matrix< N1, N2 > operator*( double scalar, Matrix< N1, N2 > const& lhs )
+{
+    return lhs * scalar;
+}
 
 template< int N1, int N2 >
 constexpr Matrix< N2, N1 > Matrix< N1, N2 >::getTranspose() const noexcept
@@ -120,20 +157,15 @@ constexpr Matrix< N1, N3 > operator*( Matrix< N1, N2 > lhs, const Matrix< N2, N3
 }
 
 template< int N1, int N2 >
+constexpr Matrix< N1, N2 > operator-( Matrix< N1, N2 > lhs, const Matrix< N1, N2 >& rhs )
+{
+    return matrixOperation( lhs, rhs, []( double a, double b ) { return a - b; } );
+}
+
+template< int N1, int N2 >
 constexpr Matrix< N1, N2 > operator+( Matrix< N1, N2 > lhs, const Matrix< N1, N2 >& rhs )
 {
-    Matrix< N1, N2 > result;
-
-    for ( std::size_t i = 0; i < N1; ++i )
-    {
-        for ( std::size_t j = 0; j < N2; ++j )
-        {
-           result.data[ i ][ j ] = lhs.data[ i ][ j ] + rhs.data[ i ][ j ];
-        }
-    }
-
-    return result;
-
+    return matrixOperation( lhs, rhs, []( double a, double b ) { return a + b; } );
 }
 
 template< int N1, int N2 >
@@ -259,6 +291,22 @@ Matrix< N1, N2 >::Matrix()
             elem = 0.0;
         }
     }
+}
+
+template< int N1, int N2, typename Function >
+constexpr Matrix< N1, N2 > matrixOperation( Matrix< N1, N2 > const& lhs, Matrix< N1, N2 > const& rhs, Function operation )
+{
+    Matrix< N1, N2 > result;
+
+    for ( std::size_t i = 0; i < N1; ++i )
+    {
+        for ( std::size_t j = 0; j < N2; ++j )
+        {
+        result.data[ i ][ j ] = operation( lhs.data[ i ][ j ], rhs.data[ i ][ j ] );
+        }
+    }
+
+    return result;
 }
 
 #endif

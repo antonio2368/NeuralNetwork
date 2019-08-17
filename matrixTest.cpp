@@ -24,5 +24,7 @@ int main()
     std::cout << "Matrix:\n" << testMatrix << '\n';
     std::cout << "Transpose\n" << transpose << '\n';
     std::cout << "Matrix + Matrix:\n" << testMatrix + testMatrix << '\n';
-    std::cout << "Matrix * Matrix:\n" << testMatrix * transpose << '\n';
+    std::cout << "Matrix - Matrix - Matrix:\n" << testMatrix - testMatrix - testMatrix << '\n';
+    std::cout << "Matrix * Matrix.T:\n" << testMatrix * transpose << '\n';
+    std::cout << "2 * Matrix * 4:\n" << 2 * testMatrix * 4 << '\n';
 }
