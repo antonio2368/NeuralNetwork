@@ -2,6 +2,7 @@
 #define MATRIX_H
 
 #include "zip.hpp"
+#include "coordinate.hpp"
 
 #include <array>
 #include <exception>
@@ -17,6 +18,18 @@ namespace
 {
     constexpr int doublePrecision = 5;
     constexpr int outputWidth = 9;
+
+    constexpr bool isPowerOf2( int n ) noexcept
+    {
+        int oneCount = 0;
+        while ( n != 0 )
+        {
+            oneCount += n & 1;
+            n >>= 1;
+        }
+
+        return oneCount == 1;
+    }
 }
 
 template< int N1, int N2 >
@@ -36,6 +49,15 @@ private:
 
     template< int K1, int K2, typename Function >
     friend constexpr Matrix< K1, K2 > matrixOperation( Matrix< K1, K2 > const& lhs, Matrix< K1, K2 > const& rhs, Function operation );
+
+    template< int K1, int K2, int K3 >
+    friend constexpr Matrix< K1, K3 > classicMatrixMultiplication( Matrix< K1, K2 > const& lhs, Matrix< K2, K3 > const& rhs ) noexcept;
+
+    template< int K >
+    friend constexpr Matrix< K, K > strassanMatrixMultiplication( Matrix< K, K > const& lhs, Matrix< K, K > const& rhs ) noexcept;
+
+    template< int K >
+    friend constexpr Matrix< K, K > strassanMatrixMultiplicationRecurse( Matrix< K, K > const& lhs, Matrix< K, K > const& rhs, Coordinate coordinate, std::size_t size ) noexcept;
 public:
     Matrix();
 
@@ -60,26 +82,29 @@ public:
 
     double max() const noexcept;
 
-    constexpr std::array< double, N2 > getRow( std::size_t index ) const noexcept;
+    constexpr std::array< double, N2 > getRow( std::size_t ) const noexcept;
 
-    constexpr std::array< double, N1 > getColumn( std::size_t index ) const noexcept;
+    constexpr std::array< double, N1 > getColumn( std::size_t ) const noexcept;
 
     constexpr Matrix< N2, N1 > getTranspose() const noexcept;
 
-    template< int K1, int K2 >
-    friend constexpr Matrix< K1, K2 > operator-( Matrix< K1, K2 > lhs, const Matrix< K1, K2 >& rhs );
+    template< std::size_t rowNum, std::size_t colNum >
+    constexpr Matrix< rowNum, colNum > getSubMatrix( Coordinate ) noexcept;
 
     template< int K1, int K2 >
-    friend constexpr Matrix< K1, K2 > operator+( Matrix< K1, K2 > lhs, const Matrix< K1, K2 >& rhs );
+    friend constexpr Matrix< K1, K2 > operator-( Matrix< K1, K2 >, const Matrix< K1, K2 >& );
+
+    template< int K1, int K2 >
+    friend constexpr Matrix< K1, K2 > operator+( Matrix< K1, K2 >, const Matrix< K1, K2 >& );
 
     template< int K1, int K2, int K3 >
-    friend constexpr Matrix< K1, K3 > operator*( Matrix< K1, K2 > lhs, const Matrix< K2, K3 >& rhs );
+    friend constexpr Matrix< K1, K3 > operator*( Matrix< K1, K2 >, const Matrix< K2, K3 >& );
 
     template< int K1, int K2 >
-    friend constexpr Matrix< K1, K2 > operator*( Matrix< K1, K2 > const& lhs, double scalar );
+    friend constexpr Matrix< K1, K2 > operator*( Matrix< K1, K2 > const&, double );
 
     template< int K1, int K2 >
-    friend constexpr Matrix< K1, K2 > operator*( double scalar, Matrix< K1, K2 > const& lhs );
+    friend constexpr Matrix< K1, K2 > operator*( double, Matrix< K1, K2 > const& );
 
     template< std::size_t K >
     friend std::ostream& operator<<( std::ostream&, std::array< double, K > const& );
@@ -89,6 +114,7 @@ public:
 
     template< int, int >
     friend class Matrix;
+
 };
 
 template< int N1, int N2 >
@@ -128,14 +154,63 @@ constexpr Matrix< N2, N1 > Matrix< N1, N2 >::getTranspose() const noexcept
     }
 
     return result;
+}
+
+template< int N, typename Function >
+constexpr Matrix< N, N > binaryOperationSubMatrix( Matrix< N, N > const& lhs, Matrix< N, N > const & rhs, Coordinate firstCoordinate, Coordinate secondCoordinate, Function operation ) noexcept
+{
 
 }
 
+template< int N1, int N2 >
+template< std::size_t rowNum, std::size_t colNum >
+constexpr Matrix< rowNum, colNum > Matrix< N1, N2 >::getSubMatrix( Coordinate coordinate ) noexcept
+{
+    assert( coordinate.first() < N1 && coordinate.second() < N2 );
+    assert( coordinate.first() + rowNum <= N1 && coordinate.second() + colNum <= N2 );
+
+    Matrix< rowNum, colNum > result;
+
+    for ( int i1 = coordinate.first(), i2 = 0; i2 < rowNum; ++i1, ++i2 )
+    {
+        for ( int j1 = coordinate.second(), j2 = 0; j2 < colNum; ++j1, ++j2 )
+        {
+            result.data[ i2 ][ j2 ] = data[ i1 ][ j1 ];
+        }
+    }
+
+    return result;
+}
+
+template< int N >
+constexpr Matrix< N, N > strassanMatrixMultiplicationRecurse( Matrix< N, N > const& lhs, Matrix< N, N > const& rhs, Coordinate coordinate ) noexcept
+{
+    if ( N == 1 )
+    {
+        return lhs.data[0][0] * rhs.data[0][0];
+    }
+
+    std::size_t subMatrixSize = N / 2;
+
+    Coordinate upperLeft{ coordinate.first(), coordinate.second() };
+    Coordinate upperRight{ coordinate.first() + subMatrixSize, coordinate.second() };
+    Coordinate lowerLeft{ coordinate.first(), coordinate.second() + subMatrixSize };
+    Coordinate lowerRight{ coordinate.first() + subMatrixSize, coordinate.second() + subMatrixSize };
+}
+
+template< int N >
+constexpr Matrix< N, N > strassanMatrixMultiplication( Matrix< N, N > const& lhs, Matrix< N, N > const& rhs ) noexcept
+{
+    static_assert( isPowerOf2( N ), "Strassen can only be applied to square matrices with dimension that are power of 2" );
+
+
+    return strassanMatrixMultiplicationRecurse( lhs, rhs, Coordinate{ 0, 0 } );
+}
+
 template< int N1, int N2, int N3 >
-constexpr Matrix< N1, N3 > operator*( Matrix< N1, N2 > lhs, const Matrix< N2, N3 >& rhs )
+constexpr Matrix< N1, N3 > classicMatrixMultiplication( Matrix< N1, N2 > const& lhs, Matrix< N2, N3 > const& rhs ) noexcept
 {
     Matrix< N1, N3 > result;
-
     for ( std::size_t i = 0; i < N1; ++i )
     {
         for  ( std::size_t j = 0; j < N3; ++ j )
@@ -154,6 +229,14 @@ constexpr Matrix< N1, N3 > operator*( Matrix< N1, N2 > lhs, const Matrix< N2, N3
     }
 
     return result;
+
+}
+
+template< int N1, int N2, int N3 >
+constexpr Matrix< N1, N3 > operator*( Matrix< N1, N2 > lhs, const Matrix< N2, N3 >& rhs )
+{
+    auto const& lhsRef = lhs;;
+    return classicMatrixMultiplication( lhsRef, rhs );
 }
 
 template< int N1, int N2 >

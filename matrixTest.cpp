@@ -1,6 +1,7 @@
+#include "matrix.hpp"
+
 #include <iostream>
 #include <vector>
-#include "matrix.hpp"
 
 int main()
 {
@@ -14,7 +15,10 @@ int main()
         } 
     };
 
+    auto const& testMatrixCref = testMatrix;
+
     Matrix< 2, 3 > transpose = testMatrix.getTranspose();
+    Matrix< 1, 2 > subMatrix = testMatrix.getSubMatrix< 1, 2 >( Coordinate{ 1, 0 } );
 
     std::cout << "Row num: " << testMatrix.getRowNum() << '\n';
     std::cout << "Col num: " << testMatrix.getColNum() << '\n';
@@ -27,4 +31,5 @@ int main()
     std::cout << "Matrix - Matrix - Matrix:\n" << testMatrix - testMatrix - testMatrix << '\n';
     std::cout << "Matrix * Matrix.T:\n" << testMatrix * transpose << '\n';
     std::cout << "2 * Matrix * 4:\n" << 2 * testMatrix * 4 << '\n';
+    std::cout << "submatrix:\n" << subMatrix << '\n';
 }

@@ -3,7 +3,7 @@ BUILD=build
 INCLUDE=includes
 CFLAGS=-std=c++17
 
-$(BUILD)/matrixTest: matrixTest.cpp $(BUILD)/matrix.o
+$(BUILD)/matrixTest: matrixTest.cpp $(BUILD)/matrix.o matrix.hpp
 			$(CXX) $(CFLAGS) -o $@ $^ -I$(INCLUDE)
 
 $(BUILD)/%.o: %.cpp
