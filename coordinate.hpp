@@ -1,6 +1,8 @@
 #ifndef COORDINATE_H
 #define COORDINATE_H
 
+#include<iostream>
+
 struct Coordinate
 {
 private:
@@ -19,6 +21,8 @@ public:
     {
         return second_;
     }
+
+    friend std::ostream& operator<<( std::ostream& os, Coordinate const& coordinate );
 };
 
 #endif
