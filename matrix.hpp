@@ -100,7 +100,7 @@ public:
     Matrix< N1, N2 > operator=( Matrix< N1, N2 >&& );
 
     template< std::size_t rowNum, std::size_t colNum >
-    constexpr Matrix< rowNum, colNum > getSubMatrix( Coordinate ) noexcept;
+    constexpr Matrix< rowNum, colNum > getSubMatrix( Coordinate const& ) const noexcept;
 
     template< int K1, int K2 >
     friend constexpr Matrix< K1, K2 > operator-( Matrix< K1, K2 >, const Matrix< K1, K2 >& );
@@ -202,7 +202,7 @@ constexpr Matrix< rowNum , colNum > binaryOperationSubmatrix( Matrix< K1 , K2 > 
 
 template< int N1, int N2 >
 template< std::size_t rowNum, std::size_t colNum >
-constexpr Matrix< rowNum, colNum > Matrix< N1, N2 >::getSubMatrix( Coordinate coordinate ) noexcept
+constexpr Matrix< rowNum, colNum > Matrix< N1, N2 >::getSubMatrix( Coordinate const& coordinate ) const noexcept
 {
     assert( coordinate.first() < N1 && coordinate.second() < N2 );
     assert( coordinate.first() + rowNum <= N1 && coordinate.second() + colNum <= N2 );
@@ -220,20 +220,41 @@ constexpr Matrix< rowNum, colNum > Matrix< N1, N2 >::getSubMatrix( Coordinate co
     return result;
 }
 
+
+// TODO: Use move for lhs and rhs
 template< int K  >
-constexpr Matrix< K , K  > strassanMatrixMultiplicationRecurse( Matrix< K , K  > const& lhs, Matrix< K , K  > const& rhs, Coordinate coordinate ) noexcept
+constexpr Matrix< K , K  > strassanMatrixMultiplicationRecurse( Matrix< K , K  > const& lhs, Matrix< K , K  > const& rhs ) noexcept
 {
+    std::size_t const subMatrixSize = K  / 2;
+    Matrix< subMatrixSize, subMatrixSize > result;
+
     if ( K  == 1 )
-    {
-        return lhs.data[0][0] * rhs.data[0][0];
+    {   
+        result.data[0][0] = lhs.data[0][0] * rhs.data[0][0];
+        return result;
     }
 
-    std::size_t subMatrixSize = K  / 2;
+    Coordinate upperLeft{ 0, 0 };
+    Coordinate upperRight{ subMatrixSize, 0 };
+    Coordinate lowerLeft{ 0, subMatrixSize };
+    Coordinate lowerRight{ subMatrixSize, subMatrixSize };
 
-    Coordinate upperLeft{ coordinate.first(), coordinate.second() };
-    Coordinate upperRight{ coordinate.first() + subMatrixSize, coordinate.second() };
-    Coordinate lowerLeft{ coordinate.first(), coordinate.second() + subMatrixSize };
-    Coordinate lowerRight{ coordinate.first() + subMatrixSize, coordinate.second() + subMatrixSize };
+    using SubMatrix = Matrix< subMatrixSize, subMatrixSize >;
+
+    auto adder = []( auto a, auto b ) { return a + b; };
+    auto subtracter = []( auto a, auto b ) { return a - b; };
+    auto B11 = rhs.getSubMatrix( upperLeft );
+    auto M1 = strassanMatrixMultiplicationRecurse
+    ( 
+        static_cast< const SubMatrix >( binaryOperationSubmatrix< subMatrixSize, subMatrixSize >( lhs, lhs, upperLeft, lowerRight, adder ) ),
+        binaryOperationSubmatrix< subMatrixSize, subMatrixSize >( rhs, rhs, upperLeft, lowerRight, adder )
+    );
+    auto M2 = strassanMatrixMultiplicationRecurse
+    (
+        binaryOperationSubmatrix< subMatrixSize, subMatrixSize >( lhs, lhs, lowerLeft, lowerRight, adder ), B11
+        //rhs.getSubMatrix< subMatrixSize, subMatrixSize>( upperLeft )
+    );
+    return result;
 }
 
 template< int K  >
@@ -242,7 +263,7 @@ constexpr Matrix< K , K  > strassanMatrixMultiplication( Matrix< K , K  > const&
     static_assert( isPowerOf2( K  ), "Strassen can only be applied to square matrices with dimension that are power of 2" );
 
 
-    return strassanMatrixMultiplicationRecurse( lhs, rhs, Coordinate{ 0, 0 } );
+    return strassanMatrixMultiplicationRecurse( lhs, rhs );
 }
 
 template< int K1, int K2, int K3 >
@@ -273,8 +294,18 @@ constexpr Matrix< K1, K3 > classicMatrixMultiplication( Matrix< K1, K2 > const& 
 template< int K1, int K2, int K3 >
 constexpr Matrix< K1, K3 > operator*( Matrix< K1, K2 > lhs, const Matrix< K2, K3 >& rhs )
 {
-    auto const& lhsRef = lhs;;
-    return classicMatrixMultiplication( lhsRef, rhs );
+    auto const& lhsRef = lhs;
+
+    if constexpr ( K1 == K2 && K1 == K3 && isPowerOf2( K1 ) )
+    {
+        std::cout << "using strassan\n";
+        return strassanMatrixMultiplication( lhs, rhs );
+    }
+    else
+    {
+        std::cout << "using classic\n";
+        return classicMatrixMultiplication( lhsRef, rhs );
+    }
 }
 
 template< int K1, int K2 >
