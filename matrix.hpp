@@ -64,7 +64,7 @@ private:
 public:
     Matrix();
 
-    Matrix( MatrixData< N1, N2 >&& data ) : data{ data }
+    Matrix( MatrixData< N1, N2 >&& data ) : data{ std::move( data ) }
     {}
 
     template< template< typename > class RowCollection, 
@@ -72,6 +72,10 @@ public:
     Matrix( RowCollection< ColumnCollection< double > > const& );
 
     Matrix( std::initializer_list< std::initializer_list< double > >const & );
+
+    Matrix( Matrix< N1, N2 > const & ) = default;
+    
+    Matrix( Matrix< N1, N2 >&& ) = default;
 
     constexpr std::size_t getRowNum() const noexcept
     {
@@ -90,6 +94,10 @@ public:
     constexpr std::array< double, N1 > getColumn( std::size_t ) const noexcept;
 
     constexpr Matrix< N2, N1 > getTranspose() const noexcept;
+
+    Matrix< N1, N2 > operator=( Matrix< N1, N2 > const& );
+    
+    Matrix< N1, N2 > operator=( Matrix< N1, N2 >&& );
 
     template< std::size_t rowNum, std::size_t colNum >
     constexpr Matrix< rowNum, colNum > getSubMatrix( Coordinate ) noexcept;
@@ -119,6 +127,18 @@ public:
     friend class Matrix;
 
 };
+
+template< int N1, int N2 >
+Matrix< N1, N2 > Matrix< N1, N2 >::operator=( Matrix< N1, N2 > const& other )
+{
+    return Matrix< N1, N2 >( other );
+}
+
+template< int N1, int N2 >
+Matrix< N1, N2 > Matrix< N1, N2 >::operator=( Matrix< N1, N2 >&& other )
+{
+    return Matrix< N1, N2 >( std::move( other ) );
+}
 
 template< int K1, int K2 >
 constexpr Matrix< K1, K2 > operator*( Matrix< K1, K2 > const& lhs, double scalar )
