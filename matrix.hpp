@@ -54,7 +54,7 @@ private:
     friend constexpr Matrix< rowNum , colNum > binaryOperationSubmatrix( Matrix< K1 , K2 > const&, Matrix< K3 , K4 > const &, Coordinate const&, Coordinate const&, Function ) noexcept;
 
     template< int K1, int K2, int K3, int K4 >
-    friend constexpr void copySubMatrix( Matrix< K1, K2 >&, Matrix< K3, K4 >&&, Coordinate const&, std::size_t rowNum, std::size_t colNum ) noexcept;
+    friend constexpr void copySubMatrix( Matrix< K1, K2 >&, Matrix< K3, K4 >&&, Coordinate const&, std::size_t, std::size_t ) noexcept;
 
     template< int K1, int K2, int K3 >
     friend constexpr Matrix< K1, K3 > classicMatrixMultiplication( Matrix< K1, K2 > const&, Matrix< K2, K3 > const& ) noexcept;
