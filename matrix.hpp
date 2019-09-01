@@ -48,19 +48,22 @@ private:
     void createMatrixFromCollection( RowCollection< ColumnCollection< double > > const&  );
 
     template< int K1, int K2, typename Function >
-    friend constexpr Matrix< K1, K2 > matrixOperation( Matrix< K1, K2 > const& lhs, Matrix< K1, K2 > const& rhs, Function operation );
+    friend constexpr Matrix< K1, K2 > matrixOperation( Matrix< K1, K2 > const&, Matrix< K1, K2 > const&, Function );
 
     template< std::size_t rowNum, std::size_t colNum, int K1, int K2, int K3, int K4, typename Function >
-    friend constexpr Matrix< rowNum , colNum > binaryOperationSubmatrix( Matrix< K1 , K2 > const& lhs, Matrix< K3 , K4 > const & rhs, Coordinate firstCoordinate, Coordinate secondCoordinate, Function operation ) noexcept;
+    friend constexpr Matrix< rowNum , colNum > binaryOperationSubmatrix( Matrix< K1 , K2 > const&, Matrix< K3 , K4 > const &, Coordinate const&, Coordinate const&, Function ) noexcept;
+
+    template< int K1, int K2, int K3, int K4 >
+    friend constexpr void copySubMatrix( Matrix< K1, K2 >&, Matrix< K3, K4 >&&, Coordinate const&, std::size_t rowNum, std::size_t colNum ) noexcept;
 
     template< int K1, int K2, int K3 >
-    friend constexpr Matrix< K1, K3 > classicMatrixMultiplication( Matrix< K1, K2 > const& lhs, Matrix< K2, K3 > const& rhs ) noexcept;
+    friend constexpr Matrix< K1, K3 > classicMatrixMultiplication( Matrix< K1, K2 > const&, Matrix< K2, K3 > const& ) noexcept;
 
     template< int K >
-    friend constexpr Matrix< K, K > strassanMatrixMultiplication( Matrix< K, K > const& lhs, Matrix< K, K > const& rhs ) noexcept;
+    friend constexpr Matrix< K, K > strassanMatrixMultiplication( Matrix< K, K > const&, Matrix< K, K > const& ) noexcept;
 
-    template< int K >
-    friend constexpr Matrix< K, K > strassanMatrixMultiplicationRecurse( Matrix< K, K > const& lhs, Matrix< K, K > const& rhs, Coordinate coordinate, std::size_t size ) noexcept;
+    template< int K  >
+    friend constexpr Matrix< K , K  > strassanMatrixMultiplicationRecurse( Matrix< K , K  > &&, Matrix< K , K  > && ) noexcept;
 public:
     Matrix();
 
@@ -179,8 +182,23 @@ constexpr Matrix< K2, K1 > Matrix< K1, K2 >::getTranspose() const noexcept
     return result;
 }
 
+template< int K1, int K2, int K3, int K4 >
+constexpr void copySubMatrix( Matrix< K1, K2 >& destination, Matrix< K3, K4 >&& source, Coordinate const& coordinate, std::size_t rowNum, std::size_t colNum ) noexcept
+{
+    assert( coordinate.first() < K1 && coordinate.second() < K2 );
+    assert( coordinate.first() + rowNum <= K1 && coordinate.second() + colNum <= K2 );
+
+    for ( int i1 = coordinate.first(), i2 = 0; i2 < rowNum; ++i1, ++i2 )
+    {
+        for ( int j1 = coordinate.second(), j2 = 0; j2 < colNum; ++j1, ++j2 )
+        {
+            destination.data[ i1 ][ j1 ] = source.data[ i2 ][ j2 ];
+        }
+    }
+}
+
 template< std::size_t rowNum, std::size_t colNum, int K1, int K2, int K3, int K4, typename Function >
-constexpr Matrix< rowNum , colNum > binaryOperationSubmatrix( Matrix< K1 , K2 > const& lhs, Matrix< K3 , K4 > const & rhs, Coordinate firstCoordinate, Coordinate secondCoordinate, Function operation ) noexcept
+constexpr Matrix< rowNum , colNum > binaryOperationSubmatrix( Matrix< K1 , K2 > const& lhs, Matrix< K3 , K4 > const & rhs, Coordinate const& firstCoordinate, Coordinate const& secondCoordinate, Function operation ) noexcept
 {
     assert( firstCoordinate.first() < K1 && firstCoordinate.second() < K2 );
     assert( secondCoordinate.first() < K3 && secondCoordinate.second() < K4 );
@@ -221,40 +239,81 @@ constexpr Matrix< rowNum, colNum > Matrix< N1, N2 >::getSubMatrix( Coordinate co
 }
 
 
-// TODO: Use move for lhs and rhs
 template< int K  >
-constexpr Matrix< K , K  > strassanMatrixMultiplicationRecurse( Matrix< K , K  > const& lhs, Matrix< K , K  > const& rhs ) noexcept
+constexpr Matrix< K , K  > strassanMatrixMultiplicationRecurse( Matrix< K , K  > && lhs, Matrix< K , K  > && rhs ) noexcept
 {
-    std::size_t const subMatrixSize = K  / 2;
-    Matrix< subMatrixSize, subMatrixSize > result;
+    Matrix< K, K > result;
 
-    if ( K  == 1 )
-    {   
+    if constexpr ( K  == 1 )
+    {
         result.data[0][0] = lhs.data[0][0] * rhs.data[0][0];
         return result;
     }
+    else
+    {        
+        constexpr std::size_t subMatrixSize = K / 2;
 
-    Coordinate upperLeft{ 0, 0 };
-    Coordinate upperRight{ subMatrixSize, 0 };
-    Coordinate lowerLeft{ 0, subMatrixSize };
-    Coordinate lowerRight{ subMatrixSize, subMatrixSize };
+        Coordinate upperLeft{ 0, 0 };
+        Coordinate upperRight{ subMatrixSize, 0 };
+        Coordinate lowerLeft{ 0, subMatrixSize };
+        Coordinate lowerRight{ subMatrixSize, subMatrixSize };
 
-    using SubMatrix = Matrix< subMatrixSize, subMatrixSize >;
+        auto addSubmatrices = [ & ]( auto const& lhs, auto const& rhs, auto const& firstCoordinate, auto const& secondCoordinate )
+        {
+            Matrix< subMatrixSize, subMatrixSize > result = binaryOperationSubmatrix< subMatrixSize, subMatrixSize >( lhs, rhs, firstCoordinate, secondCoordinate, []( auto a, auto b ) { return a + b; } );
+            return result;
+        };
 
-    auto adder = []( auto a, auto b ) { return a + b; };
-    auto subtracter = []( auto a, auto b ) { return a - b; };
-    auto B11 = rhs.getSubMatrix( upperLeft );
-    auto M1 = strassanMatrixMultiplicationRecurse
-    ( 
-        static_cast< const SubMatrix >( binaryOperationSubmatrix< subMatrixSize, subMatrixSize >( lhs, lhs, upperLeft, lowerRight, adder ) ),
-        binaryOperationSubmatrix< subMatrixSize, subMatrixSize >( rhs, rhs, upperLeft, lowerRight, adder )
-    );
-    auto M2 = strassanMatrixMultiplicationRecurse
-    (
-        binaryOperationSubmatrix< subMatrixSize, subMatrixSize >( lhs, lhs, lowerLeft, lowerRight, adder ), B11
-        //rhs.getSubMatrix< subMatrixSize, subMatrixSize>( upperLeft )
-    );
-    return result;
+        auto subtractSubmatrices = [ & ]( auto const& lhs, auto const& rhs, auto const& firstCoordinate, auto const& secondCoordinate )
+        {
+            Matrix< subMatrixSize, subMatrixSize > result = binaryOperationSubmatrix< subMatrixSize, subMatrixSize >( lhs, rhs, firstCoordinate, secondCoordinate, []( auto a, auto b ) { return a - b; } );
+            return result;
+        };
+
+        auto M1 = strassanMatrixMultiplicationRecurse
+        ( 
+            addSubmatrices( lhs, lhs, upperLeft, lowerRight ),
+            addSubmatrices( rhs, rhs, upperLeft, lowerRight )
+        );
+        auto M2 = strassanMatrixMultiplicationRecurse
+        (
+            addSubmatrices( lhs, lhs, lowerLeft, lowerRight ),
+            rhs.template getSubMatrix< subMatrixSize, subMatrixSize >( upperLeft )
+        );
+        auto M3 = strassanMatrixMultiplicationRecurse
+        (
+            lhs.template getSubMatrix< subMatrixSize, subMatrixSize >( upperLeft ),
+            subtractSubmatrices( rhs, rhs, upperRight, lowerRight )
+        );
+        auto M4 = strassanMatrixMultiplicationRecurse
+        (
+            lhs.template getSubMatrix< subMatrixSize, subMatrixSize >( lowerRight ),
+            subtractSubmatrices( rhs, rhs, lowerLeft, upperLeft )
+        );
+        auto M5 = strassanMatrixMultiplicationRecurse
+        (
+            addSubmatrices( lhs, lhs, upperLeft, upperRight ),
+            rhs.template getSubMatrix< subMatrixSize, subMatrixSize >( lowerRight )
+        );
+        auto M6 = strassanMatrixMultiplicationRecurse
+        (
+            subtractSubmatrices( lhs, lhs, lowerLeft, upperLeft ),
+            addSubmatrices( rhs, rhs, upperLeft, upperRight )
+        );
+        auto M7 = strassanMatrixMultiplicationRecurse
+        (
+            subtractSubmatrices( lhs, lhs, upperRight, lowerRight ),
+            addSubmatrices( rhs, rhs, lowerLeft, lowerRight )
+        );
+
+        copySubMatrix( result, M1 + M4 - M5 + M7, upperLeft,  subMatrixSize, subMatrixSize );
+        copySubMatrix( result, M3 + M5,           upperRight, subMatrixSize, subMatrixSize );
+        copySubMatrix( result, M2 + M4,           lowerLeft,  subMatrixSize, subMatrixSize );
+        copySubMatrix( result, M1 - M2 + M3 + M6, lowerRight, subMatrixSize, subMatrixSize );
+
+        return result;
+    }
+
 }
 
 template< int K  >
@@ -262,8 +321,10 @@ constexpr Matrix< K , K  > strassanMatrixMultiplication( Matrix< K , K  > const&
 {
     static_assert( isPowerOf2( K  ), "Strassen can only be applied to square matrices with dimension that are power of 2" );
 
+    Matrix< K, K > lhsTemp{ lhs };
+    Matrix< K, K > rhsTemp{ rhs };
 
-    return strassanMatrixMultiplicationRecurse( lhs, rhs );
+    return strassanMatrixMultiplicationRecurse( std::move( lhsTemp ), std::move( lhsTemp ) );
 }
 
 template< int K1, int K2, int K3 >
