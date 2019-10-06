@@ -4,7 +4,7 @@ project(Math VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
-add_executable(MatrixTest src/matrixTest.cpp)
+add_executable(MatrixTest ${CMAKE_CURRENT_SOURCE_DIR}/test/matrixTest.cpp)
 
 set_property(TARGET MatrixTest PROPERTY CXX_STANDARD 17 )
 
