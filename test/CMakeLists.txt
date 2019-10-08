@@ -33,8 +33,8 @@ endfunction()
 
 add_gtest_executable(${PROJECT_TEST_DIR}/main.cpp)
 
-add_gtest(MatrixTest ${PROJECT_TEST_DIR}/matrix.cpp)
-
+add_gtest(TensorTest ${PROJECT_TEST_DIR}/tensor.cpp)
 add_gtest(TensorDataTest ${PROJECT_TEST_DIR}/memory/tensorData.cpp)
+
 
 gtest_discover_tests(testMain)

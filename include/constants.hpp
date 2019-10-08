@@ -1,0 +1,1 @@
+constexpr int Dynamic = -1;
