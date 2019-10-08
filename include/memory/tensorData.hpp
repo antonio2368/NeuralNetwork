@@ -2,6 +2,12 @@
 
 #include <array>
 
+namespace math
+{
+
+namespace memory
+{
+
 template < typename T, int LEAD_SIZE, int... SIZES >
 class TensorData
 {
@@ -48,3 +54,7 @@ public:
         return 1;
     }
 };
+
+} // namespace memory
+
+} // namespace math
