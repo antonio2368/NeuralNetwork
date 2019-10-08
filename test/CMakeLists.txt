@@ -9,32 +9,25 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(googletest)
 
-function(add_gtest_target target_name)
-    set_property(TARGET ${target_name} PROPERTY CXX_STANDARD 17)
-    target_link_libraries(${target_name} gtest)
-endfunction()
-
 function(add_gtest_executable executable_path)
     add_executable(testMain ${executable_path})
-    add_gtest_target(testMain)
-endfunction()
 
-function(add_gtest test_name test_path)
-    add_library(${test_name} ${test_path})
-    add_gtest_target(${test_name})
+    set_property(TARGET testMain PROPERTY CXX_STANDARD 17)
+    target_link_libraries(testMain PUBLIC gtest)
 
-    target_include_directories(${test_name} PUBLIC 
+    target_include_directories(testMain PUBLIC 
         ${UTIL_INCLUDE_DIR}
         ${PROJECT_INCLUDE_DIR}
     )
+endfunction()
 
-    target_link_libraries(testMain ${test_name})
+function(add_gtest test_path)
+    target_sources(testMain PUBLIC ${test_path})
 endfunction()
 
 add_gtest_executable(${PROJECT_TEST_DIR}/main.cpp)
 
-add_gtest(TensorTest ${PROJECT_TEST_DIR}/tensor.cpp)
-add_gtest(TensorDataTest ${PROJECT_TEST_DIR}/memory/tensorData.cpp)
-
+add_gtest(${PROJECT_TEST_DIR}/memory/tensorData.cpp)
+add_gtest(${PROJECT_TEST_DIR}/tensor.cpp)
 
 gtest_discover_tests(testMain)

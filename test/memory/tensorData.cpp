@@ -3,9 +3,8 @@
 
 TEST( tensorDataTest, indexOperator)
 {
-    math::memory::TensorData< int, 1, 2 > test;
-    ASSERT_EQ( typeid( math::memory::TensorData< int, 2 > ), typeid( test[ 0 ] ) );
-    ASSERT_EQ( typeid( int ), typeid( test[ 0 ][ 0 ] ) );
+    math::memory::TensorData< int, 5 > test;
+    ASSERT_EQ( typeid( int ), typeid( test[ 0 ] ) );
 }
 
 TEST( tensorDataTest, defaultInit )
