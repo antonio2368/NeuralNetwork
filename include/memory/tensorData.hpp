@@ -1,48 +1,64 @@
 #pragma once
 
 #include "constants.hpp"
+#include "initializers/initializer.hpp"
+#include "initializers/zeroInitializer.hpp"
 
 #include <array>
 #include <optional>
 #include <cassert>
+#include <algorithm>
 
-namespace math
+namespace nn
 {
 
 namespace memory
 {
 
-template < typename T, int SIZE = 0 >
+template< typename Tensor, int SIZE = 0 >
 class TensorData
 {
+    using TensorElementType = typename Tensor::ElementType;
 private:
-    std::array < T, SIZE  > data_;
+    std::array < Tensor, SIZE  > data_;
+
+    void createTensors( nn::initializer::InitializerBase< TensorElementType > const& initializer )
+    {
+        std::transform( data_.begin(), data_.end(), data_.begin(), [ &initializer ]( auto& ){ return Tensor{ initializer }; } );
+    }
 public:
-    TensorData() : data_{ T{} }
-    {}
+    TensorData( nn::initializer::InitializerBase< TensorElementType >&& initializer = nn::initializer::ZeroInitializer< TensorElementType >{} )
+    {
+        createTensors( initializer );
+    }
+
+    TensorData( nn::initializer::InitializerBase< TensorElementType > const& initializer )
+    {
+        createTensors( initializer );
+    }
 
     [[ nodiscard ]]
-    T const& operator[]( std::size_t const ix ) const noexcept
+    Tensor const& operator[]( std::size_t const ix ) const noexcept
     {
         return data_[ ix ];
     }
 
-    T& operator[]( std::size_t const ix ) noexcept
+    Tensor& operator[]( std::size_t const ix ) noexcept
     {
         return data_[ ix ];
     }
 };
 
-template< typename T >
-class TensorData< T, Dynamic >
+template< typename Tensor >
+class TensorData< Tensor, Dynamic >
 {
 private:
     std::optional< std::size_t > size_;
-    T* data_ = nullptr;
+    Tensor* data_ = nullptr;
 public:
     TensorData() = default;
 
-    TensorData( TensorData< T > const& other ) : size_{ other.size_ }
+    TensorData( TensorData< Tensor > const& other ) : size_{ other.size_ }
     {
         memcpy( data_, other.data_, size_ );
     }
@@ -53,7 +69,7 @@ public:
 
         size_.emplace( size );
 
-        data_ = new T[ size_.value() ];
+        data_ = new Tensor[ size_.value() ];
     }
 
     void resetSize() noexcept
@@ -72,7 +88,7 @@ public:
     }
 
     [[ nodiscard ]]
-    T const& operator[]( std::size_t const ix ) const noexcept
+    Tensor const& operator[]( std::size_t const ix ) const noexcept
     {
         assert( size_ );
 
@@ -82,7 +98,7 @@ public:
         }
     }
 
-    T& operator[]( std::size_t const ix ) noexcept
+    Tensor& operator[]( std::size_t const ix ) noexcept
     {
         assert( size_ );
 
@@ -108,9 +124,16 @@ class TensorData< T >
 {
 private:
     T data_;
-
 public:
-    TensorData() = default;
+    TensorData( nn::initializer::InitializerBase< T >&& initializer = nn::initializer::ZeroInitializer< T >{} )
+    {
+        data_ = initializer.getValue();
+    }
+
+    TensorData( nn::initializer::InitializerBase< T > const& initializer )
+    {
+        data_ = initializer.getValue();
+    }
 
     TensorData( T value ) : data_{ value }
     {}
@@ -121,13 +144,13 @@ public:
         return data_;
     }
 
-    TensorData< T >& operator=( T const data ) noexcept
+    TensorData< T >& operator=( T&& data ) noexcept
     {
-        data_ = data;
+        data_ = std::move( data );
         return *this;
     }
 };
 
 } // namespace memory
 
-} // namespace math
+} // namespace nn
