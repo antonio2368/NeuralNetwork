@@ -50,6 +50,12 @@ private:
     memory::TensorData< T > data_;
 
 public:
+    Tensor() : data_{ T{} }
+    {}
+
+    Tensor( T value ) : data_{ value }
+    {}
+
     T get() const noexcept
     {
         return data_.get();
