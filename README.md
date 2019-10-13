@@ -1,2 +1,2 @@
-# Math
-Math library
+# Neural network 
+Library for defining neural networks
