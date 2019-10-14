@@ -23,11 +23,7 @@ private:
 public:
     using ElementType = T;
 
-    Tensor( nn::initializer::InitializerBase< T > && initializer = nn::initializer::ZeroInitializer< T >{} )
-        : data_{ std::move( initializer ) }
-    {}
-
-    Tensor( nn::initializer::InitializerBase< T > const & initializer )
+    Tensor( nn::initializer::InitializerBase< T > const & initializer = nn::initializer::ZeroInitializer< T >{} )
         : data_{ initializer }
     {}
 
@@ -64,11 +60,7 @@ private:
 public:
      using ElementType = T;
 
-    Tensor( nn::initializer::InitializerBase< T > && initializer = nn::initializer::ZeroInitializer< T >{} )
-        : data_{ std::move( initializer ) }
-    {}
-
-    Tensor( nn::initializer::InitializerBase< T > const & initializer )
+    Tensor( nn::initializer::InitializerBase< T > const & initializer = nn::initializer::ZeroInitializer< T >{} )
         : data_{ initializer }
     {}
 
