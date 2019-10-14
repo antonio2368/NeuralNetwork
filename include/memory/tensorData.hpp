@@ -27,12 +27,7 @@ private:
         std::transform( data_.begin(), data_.end(), data_.begin(), [ &initializer ]( auto& ){ return Tensor{ initializer }; } );
     }
 public:
-    TensorData( nn::initializer::InitializerBase< TensorElementType >&& initializer = nn::initializer::ZeroInitializer< TensorElementType >{} )
-    {
-        createTensors( initializer );
-    }
-
-    TensorData( nn::initializer::InitializerBase< TensorElementType > const& initializer )
+    TensorData( nn::initializer::InitializerBase< TensorElementType > const& initializer = nn::initializer::ZeroInitializer< TensorElementType >{} )
     {
         createTensors( initializer );
     }
@@ -125,12 +120,7 @@ class TensorData< T >
 private:
     T data_;
 public:
-    TensorData( nn::initializer::InitializerBase< T >&& initializer = nn::initializer::ZeroInitializer< T >{} )
-    {
-        data_ = initializer.getValue();
-    }
-
-    TensorData( nn::initializer::InitializerBase< T > const& initializer )
+    TensorData( nn::initializer::InitializerBase< T > const& initializer = nn::initializer::ZeroInitializer< T >{} )
     {
         data_ = initializer.getValue();
     }
