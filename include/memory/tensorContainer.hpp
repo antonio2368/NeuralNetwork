@@ -15,8 +15,11 @@ namespace nn
 namespace memory
 {
 
+/*
+ * Container class for tensors
+ */
 template< typename Tensor, int SIZE = 0 >
-class TensorData
+class TensorContainer
 {
     using TensorElementType = typename Tensor::ElementType;
 private:
@@ -27,54 +30,71 @@ private:
         std::transform( data_.begin(), data_.end(), data_.begin(), [ &initializer ]( auto& ){ return Tensor{ initializer }; } );
     }
 public:
-    TensorData( nn::initializer::InitializerBase< TensorElementType > const& initializer = nn::initializer::ZeroInitializer< TensorElementType >{} )
+    TensorContainer( nn::initializer::InitializerBase< TensorElementType > const& initializer = nn::initializer::ZeroInitializer< TensorElementType >{} )
     {
         createTensors( initializer );
     }
 
+    /* Const index operator for the tensor container.
+     * ix - index of the element
+     */
     [[ nodiscard ]]
     Tensor const& operator[]( std::size_t const ix ) const noexcept
     {
+        // TODO: add index bounds check
         return data_[ ix ];
     }
 
+    /* Index operator for the tensor container.
+     * ix - index of the element
+     */
     Tensor& operator[]( std::size_t const ix ) noexcept
     {
+        // TODO: add index bounds check
         return data_[ ix ];
     }
 };
 
 template< typename Tensor >
-class TensorData< Tensor, Dynamic >
+class TensorContainer< Tensor, Dynamic >
 {
+    using TensorElementType = typename Tensor::ElementType;
 private:
     std::optional< std::size_t > size_;
-    Tensor* data_ = nullptr;
+    std::vector< Tensor > data_;
 public:
-    TensorData() = default;
+    TensorContainer() = default;
 
-    TensorData( TensorData< Tensor > const& other ) : size_{ other.size_ }
+    TensorContainer( TensorContainer< Tensor > const& other ) : size_{ other.size_ }
     {
         memcpy( data_, other.data_, size_ );
     }
 
-    void setSize( std::size_t const size ) noexcept 
+    template< typename... Args >
+    void initialize( Args&&... args )
+    {
+        assert( size_ );
+        assert( data_.capacity() == size_.value() );
+
+        for ( int i = 0; i < size_; ++i )
+        {
+            data_.emplace_back( std::forward< Args >( args )... );
+        }
+    }
+
+    void setSize( std::size_t const size ) noexcept
     {
         assert( !size );
 
         size_.emplace( size );
-
-        data_ = new Tensor[ size_.value() ];
+        data_.resize( size_.value() );
     }
 
     void resetSize() noexcept
     {
         assert( size );
         size_.reset();
-
-        assert( data_ );
-        delete [] data_;
-        data_ = nullptr;
+        data_.clear();
     }
 
     std::optional< std::size_t > size() const noexcept
@@ -102,30 +122,20 @@ public:
             return data_[ ix ];
         }
     }
-
-    ~TensorData()
-    {
-        if ( data_ )
-        {
-            delete [] data_;
-            data_ = nullptr;
-        }
-    }
-
 };
 
 template< typename T >
-class TensorData< T >
+class TensorContainer< T >
 {
 private:
     T data_;
 public:
-    TensorData( nn::initializer::InitializerBase< T > const& initializer = nn::initializer::ZeroInitializer< T >{} )
+    TensorContainer( nn::initializer::InitializerBase< T > const& initializer = nn::initializer::ZeroInitializer< T >{} )
     {
         data_ = initializer.getValue();
     }
 
-    TensorData( T value ) : data_{ value }
+    TensorContainer( T value ) : data_{ value }
     {}
 
     [[ nodiscard ]]
@@ -134,7 +144,7 @@ public:
         return data_;
     }
 
-    TensorData< T >& operator=( T&& data ) noexcept
+    TensorContainer< T >& operator=( T&& data ) noexcept
     {
         data_ = std::move( data );
         return *this;

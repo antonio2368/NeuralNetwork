@@ -1,6 +1,6 @@
 #pragma once
 
-#include "memory/tensorData.hpp"
+#include "memory/tensorContainer.hpp"
 #include "initializers/initializer.hpp"
 #include "initializers/zeroInitializer.hpp"
 
@@ -18,7 +18,7 @@ class Tensor< T, LEAD_SIZE, SIZES... >
     static_assert( std::is_arithmetic_v< T >, "Tensor can hold only arithmetic types!" );
 
 private:
-    memory::TensorData< Tensor< T,  SIZES... >, LEAD_SIZE > data_;
+    memory::TensorContainer< Tensor< T,  SIZES... >, LEAD_SIZE > data_;
 
 public:
     using ElementType = T;
@@ -27,7 +27,7 @@ public:
         : data_{ initializer }
     {}
 
-    std::size_t size() const noexcept 
+    std::size_t size() const noexcept
     {
         return LEAD_SIZE;
     }
@@ -55,7 +55,7 @@ class Tensor< T >
     static_assert( std::is_arithmetic_v< T >, "Tensor can hold only arithmetic types!" );
 
 private:
-    memory::TensorData< T > data_;
+    memory::TensorContainer< T > data_;
 
 public:
      using ElementType = T;

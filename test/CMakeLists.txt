@@ -15,7 +15,7 @@ function(add_gtest_executable executable_path)
     set_property(TARGET testMain PROPERTY CXX_STANDARD 17)
     target_link_libraries(testMain PUBLIC gtest)
 
-    target_include_directories(testMain PUBLIC 
+    target_include_directories(testMain PUBLIC
         ${UTIL_INCLUDE_DIR}
         ${PROJECT_INCLUDE_DIR}
     )
@@ -27,7 +27,7 @@ endfunction()
 
 add_gtest_executable(${PROJECT_TEST_DIR}/main.cpp)
 
-add_gtest(${PROJECT_TEST_DIR}/memory/tensorData.cpp)
+add_gtest(${PROJECT_TEST_DIR}/memory/tensorContainer.cpp)
 add_gtest(${PROJECT_TEST_DIR}/tensor.cpp)
 add_gtest(${PROJECT_TEST_DIR}/initializers/initializers.cpp)
 
