@@ -37,13 +37,15 @@ public:
         return sizeof...( SIZES ) + 1;
     }
 
-    auto& operator[]( std::size_t ix ) noexcept
+    auto& operator[]( std::size_t const ix ) noexcept
     {
+        assert( ix < LEAD_SIZE );
         return data_[ ix ];
     }
 
-    auto const& operator[]( std::size_t ix ) const noexcept
+    auto const& operator[]( std::size_t const ix ) const noexcept
     {
+        assert( ix < LEAD_SIZE );
         return data_[ ix ];
     }
 };

@@ -15,6 +15,8 @@ function(add_gtest_executable executable_path)
     set_property(TARGET testMain PROPERTY CXX_STANDARD 17)
     target_link_libraries(testMain PUBLIC gtest)
 
+    target_compile_options(testMain PRIVATE -Werror -Wall -Wextra)
+
     target_include_directories(testMain PUBLIC
         ${UTIL_INCLUDE_DIR}
         ${PROJECT_INCLUDE_DIR}
