@@ -92,7 +92,7 @@ public:
 
     void resetSize() noexcept
     {
-        assert( size );
+        assert( size_ );
         size_.reset();
         data_.clear();
     }
