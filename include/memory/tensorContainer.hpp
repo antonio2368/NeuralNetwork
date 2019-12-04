@@ -3,7 +3,6 @@
 #include "constants.hpp"
 #include "initializers/initializer.hpp"
 #include "initializers/zeroInitializer.hpp"
-
 #include <array>
 #include <optional>
 #include <cassert>
@@ -33,6 +32,25 @@ public:
     TensorContainer( nn::initializer::InitializerBase< TensorElementType > const& initializer = nn::initializer::ZeroInitializer< TensorElementType >{} )
     {
         createTensors( initializer );
+    }
+
+    template< typename Container >
+    TensorContainer( Container const & container )
+    {
+        assert( std::size( container ) == SIZE );
+        std::transform( std::begin( container ), std::end( container ), std::begin( data_ ), []( auto const& elem )
+        {
+            using ContainerValueType = typename Container::value_type;
+            if constexpr ( std::is_arithmetic_v< ContainerValueType > )
+            {
+                return Tensor{ static_cast< TensorElementType >( elem ) };
+            }
+            else
+            {
+                return Tensor{ elem };
+            }
+
+        });
     }
 
     /* Const index operator for the tensor container.

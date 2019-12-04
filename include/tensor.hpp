@@ -27,6 +27,11 @@ public:
         : data_{ initializer }
     {}
 
+    template< typename Container >
+    Tensor( Container const& container )
+        : data_{ container }
+    {}
+
     std::size_t size() const noexcept
     {
         return LEAD_SIZE;

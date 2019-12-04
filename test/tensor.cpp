@@ -32,7 +32,7 @@ TEST( tensorTest, indexOperator )
 
     auto& subTensor = tensorTest[ 0 ];
     ASSERT_EQ( typeid( subTensor ), typeid( nn::Tensor< int, 3 > ) );
-    
+
     auto& scalar = subTensor [ 0 ];
     ASSERT_EQ( typeid( scalar ), typeid( nn::Scalar< int > ) );
 }
@@ -43,4 +43,12 @@ TEST( tensorTest, size )
     ASSERT_EQ( test.size(), 2 );
 
     ASSERT_EQ( test[ 0 ].size(), 1 );
+}
+
+TEST( tensorTest, initializeFromContainer )
+{
+    std::array< std::array< int, 3>, 2 > vector{ { { 1, 2, 3 }, { 1, 2, 3 } } };
+    nn::Tensor< int, 2, 3 > tensor{ vector };
+
+    std::cout << tensor[1][1] << '\n';
 }

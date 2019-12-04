@@ -20,3 +20,4 @@ model = basic.getBasicModel()
 model.compile(keras.optimizers.Adam(learning_rate=0.001), loss='mean_squared_error')
 
 model.fit(x_train, y_train)
+model.save("model")
