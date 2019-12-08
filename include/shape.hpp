@@ -19,12 +19,12 @@ private:
 public:
     using SubShape = Shape< SUBSIZES... >;
 
-    static constexpr auto const& getShape() noexcept
+    static inline constexpr auto const& getShape() noexcept
     {
         return shape_;
     }
 
-    static constexpr int getSize( std::size_t index ) noexcept
+    static inline constexpr int getSize( std::size_t index ) noexcept
     {
         return shape_[ index ];
     }
@@ -38,7 +38,7 @@ public:
 template<>
 class Shape<>
 {
-    static constexpr int dimensions() noexcept
+    static inline constexpr int dimensions() noexcept
     {
         return 0;
     }
