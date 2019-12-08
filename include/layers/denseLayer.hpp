@@ -1,7 +1,12 @@
 #include "layer.hpp"
 
-class DenseLayer
+template< typename T, typename InputShape, typename OutputShape >
+class DenseLayer : nn::Layer< T, InputShape, OutputShape >
 {
+private:
+
+
+public:
 
 
 };

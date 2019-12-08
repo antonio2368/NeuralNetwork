@@ -1,18 +1,33 @@
 #pragma once
 
 #include "../tensor.hpp"
+#include "../shape.hpp"
+#include "../typeTraits.hpp"
+
+#include <type_traits>
 #include <iostream>
 
 namespace nn
 {
 
-template< typename T, int... OUTPUT_SIZES >
+template< typename T,
+          typename InputShape,
+          typename OutputShape
+        >
 class Layer
 {
+    static_assert( is_shape_v< InputShape >, "Input shape not valid" );
+    static_assert( is_shape_v< OutputShape >, "Output shape not valid" );
+
 public:
-    constexpr auto outputSize() const noexcept
+    constexpr auto inputShape() const noexcept
     {
-        return std::array< int, sizeof...( OUTPUT_SIZES ) >{ { OUTPUT_SIZES... } };
+        return InputShape::getShape();
+    }
+
+    constexpr auto outputShape() const noexcept
+    {
+        return OutputShape::getShapes();
     }
 };
 

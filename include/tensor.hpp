@@ -3,22 +3,22 @@
 #include "memory/tensorContainer.hpp"
 #include "initializers/initializer.hpp"
 #include "initializers/zeroInitializer.hpp"
+#include "typeTraits.hpp"
+#include "shape.hpp"
 
 #include <type_traits>
 
 namespace nn
 {
 
-template< typename T, int... SIZES >
-class Tensor;
-
-template< typename T, int LEAD_SIZE, int... SIZES >
-class Tensor< T, LEAD_SIZE, SIZES... >
+template< typename T, typename Shape = Shape<> >
+class Tensor
 {
+    static_assert( is_shape_v< Shape >, "Second argument of tensor should be of class Shape" );
     static_assert( std::is_arithmetic_v< T >, "Tensor can hold only arithmetic types!" );
 
 private:
-    memory::TensorContainer< Tensor< T,  SIZES... >, LEAD_SIZE > data_;
+    memory::TensorContainer< Tensor< T,  typename Shape::SubShape >, Shape::getSize( 0 ) > data_;
 
 public:
     using ElementType = T;
@@ -34,23 +34,23 @@ public:
 
     std::size_t size() const noexcept
     {
-        return LEAD_SIZE;
+        return Shape::getSize( 0 );
     }
 
     std::size_t dimensionNum() const noexcept
     {
-        return sizeof...( SIZES ) + 1;
+        return Shape::dimensions();
     }
 
     auto& operator[]( std::size_t const ix ) noexcept
     {
-        assert( ix < LEAD_SIZE );
+        assert( ix < Shape::getSize( 0 ) );
         return data_[ ix ];
     }
 
     auto const& operator[]( std::size_t const ix ) const noexcept
     {
-        assert( ix < LEAD_SIZE );
+        assert( ix < Shape::getSize( 0 ) );
         return data_[ ix ];
     }
 };

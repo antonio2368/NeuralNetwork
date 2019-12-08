@@ -5,17 +5,17 @@
 namespace nn
 {
 
-template< typename T, int... OUTPUT_SIZES >
-class InputLayer : public Layer< T, OUTPUT_SIZES... >
+template< typename T, typename InputSize >
+class InputLayer : public Layer< T, InputSize, InputSize >
 {
 private:
-    Tensor< T, OUTPUT_SIZES... > input_;
+    Tensor< T, InputSize > input_;
 
 public:
     template< typename Container>
     auto const& operator()( Container const& input )
     {
-        input_ = Tensor< T, OUTPUT_SIZES... >{ input };
+        input_ = Tensor< T, InputSize >{ input };
         return input_;
     }
 };
