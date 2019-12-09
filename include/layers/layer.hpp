@@ -20,14 +20,14 @@ class Layer
     static_assert( is_shape_v< OutputShape >, "Output shape not valid" );
 
 public:
-    constexpr auto inputShape() const noexcept
+    constexpr auto const& inputShape() const noexcept
     {
         return InputShape::getShape();
     }
 
-    constexpr auto outputShape() const noexcept
+    constexpr auto const& outputShape() const noexcept
     {
-        return OutputShape::getShapes();
+        return OutputShape::getShape();
     }
 };
 
