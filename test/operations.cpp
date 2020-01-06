@@ -26,4 +26,10 @@ TEST( operationsTest, dotMultiply )
     nn::printTensor( result );
     std::cout << '\n';
 
+    std::vector< int > singleRowData{ 1, 2, 3 };
+    nn::Tensor< int, nn::Shape< 3 > > singleRowTensor{ singleRowData };
+    nn::Tensor< int, nn::Shape< 2 > > anotherResult = nn::dotMultiply( singleRowTensor, secondOperand );
+
+    nn::printTensor( anotherResult );
+
 }
