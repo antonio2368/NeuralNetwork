@@ -6,10 +6,10 @@
 TEST( tensorTest, dimensionNum )
 {
     nn::Tensor< int, nn::Shape< 2, 1, 3 > > tensorTest;
-    ASSERT_EQ( tensorTest.dimensionNum(), 3 );
+    ASSERT_EQ( tensorTest.dimensions(), 3 );
 
     nn::Scalar< int > scalarTest;
-    ASSERT_EQ( scalarTest.dimensionNum(), 0 );
+    ASSERT_EQ( scalarTest.dimensions(), 0 );
 }
 
 TEST( tensorTest, run )

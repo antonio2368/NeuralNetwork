@@ -18,10 +18,12 @@ class Tensor
     static_assert( std::is_arithmetic_v< T >, "Tensor can hold only arithmetic types!" );
 
 private:
-    memory::TensorContainer< Tensor< T,  typename Shape::SubShape >, Shape::getSize( 0 ) > data_;
+    memory::TensorContainer< Tensor< T,  typename Shape::SubShape >, Shape::size( 0 ) > data_;
 
 public:
     using ElementType = T;
+
+    using TensorShape = Shape;
 
     Tensor( nn::initializer::InitializerBase< T > const & initializer = nn::initializer::ZeroInitializer< T >{} )
         : data_{ initializer }
@@ -34,23 +36,23 @@ public:
 
     std::size_t size() const noexcept
     {
-        return Shape::getSize( 0 );
+        return Shape::size( 0 );
     }
 
-    std::size_t dimensionNum() const noexcept
+    static constexpr std::size_t dimensions() noexcept
     {
         return Shape::dimensions();
     }
 
     auto& operator[]( std::size_t const ix ) noexcept
     {
-        assert( ix < Shape::getSize( 0 ) );
+        assert( ix < Shape::size( 0 ) );
         return data_[ ix ];
     }
 
     auto const& operator[]( std::size_t const ix ) const noexcept
     {
-        assert( ix < Shape::getSize( 0 ) );
+        assert( ix < Shape::size( 0 ) );
         return data_[ ix ];
     }
 };
@@ -79,9 +81,9 @@ public:
         return data_.get();
     }
 
-    std::size_t dimensionNum() const noexcept
+    static constexpr std::size_t dimensions() noexcept
     {
-        return 0;
+        return Shape<>::dimensions();
     }
 
     Tensor< T >& operator=( T&& data )
@@ -98,5 +100,15 @@ public:
 
 template< typename T >
 using Scalar = Tensor< T >;
+
+// type trait
+
+template< typename > struct is_tensor : std::false_type {};
+template< typename T, typename Shape > struct is_tensor< nn::Tensor< T, Shape > > : std::true_type {};
+template< typename T > struct is_tensor< nn::Tensor< T > > : std::true_type {};
+
+template< typename T >
+inline constexpr bool is_tensor_v = is_tensor< T >::value;
+
 
 } // namespace nn

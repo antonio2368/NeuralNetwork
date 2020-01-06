@@ -22,12 +22,12 @@ class Layer
 public:
     constexpr auto const& inputShape() const noexcept
     {
-        return InputShape::getShape();
+        return InputShape::shape();
     }
 
     constexpr auto const& outputShape() const noexcept
     {
-        return OutputShape::getShape();
+        return OutputShape::shape();
     }
 };
 

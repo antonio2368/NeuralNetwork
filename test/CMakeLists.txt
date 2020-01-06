@@ -33,5 +33,7 @@ add_gtest(${PROJECT_TEST_DIR}/memory/tensorContainer.cpp)
 add_gtest(${PROJECT_TEST_DIR}/tensor.cpp)
 add_gtest(${PROJECT_TEST_DIR}/initializers/initializers.cpp)
 add_gtest(${PROJECT_TEST_DIR}/layers.cpp)
+add_gtest(${PROJECT_TEST_DIR}/operations.cpp)
+add_gtest(${PROJECT_TEST_DIR}/utils.cpp)
 
 gtest_discover_tests(testMain)
