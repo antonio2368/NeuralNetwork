@@ -1,18 +1,20 @@
 #pragma once
 
+#include "constants.hpp"
+
 #include <type_traits>
 
 namespace nn
 {
 
-template< int... SIZES >
+template< TensorSize... SIZES >
 class Shape;
 
-template< int LEAD_SIZE, int... SUBSIZES >
+template< TensorSize LEAD_SIZE, TensorSize... SUBSIZES >
 class Shape< LEAD_SIZE, SUBSIZES... >
 {
 private:
-    static constexpr std::array< int, sizeof...( SUBSIZES ) + 1 > shape_{ { LEAD_SIZE, SUBSIZES... } };
+    static constexpr std::array< TensorSize, sizeof...( SUBSIZES ) + 1 > shape_{ { LEAD_SIZE, SUBSIZES... } };
 
 public:
     using SubShape = Shape< SUBSIZES... >;
@@ -22,7 +24,7 @@ public:
         return shape_;
     }
 
-    static inline constexpr int size( std::size_t const index ) noexcept
+    static inline constexpr TensorSize size( std::size_t const index ) noexcept
     {
         return shape_[ index ];
     }
@@ -47,7 +49,7 @@ public:
 } // namespace nn
 
 template< typename > struct is_shape : std::false_type {};
-template< int... SIZES > struct is_shape< nn::Shape< SIZES... > > : std::true_type {};
+template< TensorSize... SIZES > struct is_shape< nn::Shape< SIZES... > > : std::true_type {};
 
 template< typename T >
 inline constexpr bool is_shape_v = is_shape< T >::value;

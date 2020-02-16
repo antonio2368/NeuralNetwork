@@ -17,7 +17,7 @@ namespace memory
 /*
  * Container class for tensors
  */
-template< typename Tensor, int SIZE = 0 >
+template< typename Tensor, TensorSize SIZE = 0 >
 class TensorContainer
 {
     using TensorElementType = typename Tensor::ElementType;

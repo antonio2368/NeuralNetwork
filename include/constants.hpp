@@ -1,1 +1,5 @@
-constexpr int Dynamic = -1;
+#pragma once
+
+using TensorSize = int;
+
+constexpr TensorSize Dynamic = -1;

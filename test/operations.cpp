@@ -32,4 +32,8 @@ TEST( operationsTest, dotMultiply )
 
     nn::printTensor( anotherResult );
 
+    nn::Scalar< int > scalarResult = nn::dotMultiply( singleRowTensor, singleRowTensor );
+
+    nn::printTensor( scalarResult );
+
 }

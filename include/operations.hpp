@@ -5,23 +5,27 @@
 
 namespace nn
 {
-    template< typename FirstTensor, typename SecondTensor >
-    auto dotMultiply( FirstTensor const & firstTensor, SecondTensor const & secondTensor)
+    template
+    <
+        typename FirstTensorType,
+        typename FirstTensorShape,
+        typename SecondTensorType,
+        typename SecondTensorShape
+    >
+    auto dotMultiply
+    (
+        nn::Tensor< FirstTensorType, FirstTensorShape >   const & firstTensor,
+        nn::Tensor< SecondTensorType, SecondTensorShape > const & secondTensor
+    )
     {
-        static_assert( is_tensor_v< FirstTensor >, "First argument is not tensor!" );
-        static_assert( is_tensor_v< SecondTensor >, "Second argument is not tensor!" );
-
-        static_assert( FirstTensor::dimensions() == 2, "First tensor does not have 2 dimensions" );
-        static_assert( SecondTensor::dimensions() == 2, "Second tensor does not have 2 dimensions" );
-
-        using FirstTensorShape = typename FirstTensor::TensorShape;
-        using SecondTensorShape = typename SecondTensor::TensorShape;
+        static_assert( FirstTensorShape::dimensions() == 2, "First tensor does not have 2 dimensions" );
+        static_assert( SecondTensorShape::dimensions() == 2, "Second tensor does not have 2 dimensions" );
 
         static_assert( FirstTensorShape::size( 1 ) == SecondTensorShape::size( 0 ), "Wrong dimensions for multiplication" );
 
         constexpr int commonSize = FirstTensorShape::size( 1 );
 
-        using CommonType = std::common_type_t< typename FirstTensor::ElementType, typename SecondTensor::ElementType >;
+        using CommonType = std::common_type_t< FirstTensorType, SecondTensorType >;
 
         constexpr int resultRowNum    = FirstTensorShape::size( 0 );
         constexpr int resultColumnNum = SecondTensorShape::size( 1 );
@@ -46,22 +50,24 @@ namespace nn
     template
     <
         typename FirstTensorType,
-        int FirstTensorSize,
-        typename SecondTensor
+        TensorSize FirstTensorSize,
+        typename SecondTensorType,
+        typename SecondTensorShape
     >
-    auto dotMultiply( nn::Tensor< FirstTensorType, nn::Shape< FirstTensorSize > > const & firstTensor, SecondTensor const & secondTensor)
+    auto dotMultiply
+    (
+        nn::Tensor< FirstTensorType, nn::Shape< FirstTensorSize > > const & firstTensor,
+        nn::Tensor< SecondTensorType, SecondTensorShape >           const & secondTensor
+    )
     {
-        static_assert( is_tensor_v< SecondTensor >, "Second argument is not tensor!" );
-        static_assert( SecondTensor::dimensions() == 2, "Second tensor does not have 2 dimensions" );
-
-        using SecondTensorShape = typename SecondTensor::TensorShape;
+        static_assert( SecondTensorShape::dimensions() == 2, "Second tensor does not have 2 dimensions" );
 
         static_assert( FirstTensorSize == SecondTensorShape::size( 0 ), "Wrong dimensions for multiplication" );
 
-        constexpr int commonSize = FirstTensorSize;
-        constexpr int resultColumnNum = SecondTensorShape::size( 1 );
+        constexpr TensorSize commonSize = FirstTensorSize;
+        constexpr TensorSize resultColumnNum = SecondTensorShape::size( 1 );
 
-        using CommonType = std::common_type_t< FirstTensorType, typename SecondTensor::ElementType >;
+        using CommonType = std::common_type_t< FirstTensorType, SecondTensorType >;
         using OutputShape = nn::Shape< resultColumnNum >;
 
         std::array< CommonType, resultColumnNum > result{ { 0 } };
@@ -76,6 +82,72 @@ namespace nn
 
         return nn::Tensor< CommonType, OutputShape >{ result };
     }
+
+    template
+    <
+        typename FirstTensorType,
+        typename FirstTensorShape,
+        typename SecondTensorType,
+        TensorSize SecondTensorSize
+    >
+    auto dotMultiply
+    (
+        nn::Tensor< FirstTensorType, FirstTensorShape >               const & firstTensor,
+        nn::Tensor< SecondTensorType, nn::Shape< SecondTensorSize > > const & secondTensor
+    )
+    {
+        static_assert( FirstTensorShape::dimensions() == 2, "First tensor does not have 2 dimensions" );
+
+        static_assert( SecondTensorSize == FirstTensorShape::size( 1 ), "Wrong dimensions for multiplication" );
+
+        constexpr TensorSize commonSize = SecondTensorSize;
+        constexpr TensorSize resultRowNum = FirstTensorShape::size( 0 );
+
+        using CommonType = std::common_type_t< FirstTensorType, SecondTensorType >;
+        using OutputShape = nn::Shape< resultRowNum >;
+
+        std::array< CommonType, resultRowNum > result{ 0 };
+
+        for ( int i = 0; i < resultRowNum; ++i )
+        {
+            for ( int j = 0; j < commonSize; ++j )
+            {
+                result[ i ] = firstTensor[ i ][ j ].get() * secondTensor[ j ].get();
+            }
+        }
+
+        return nn::Tensor< CommonType, OutputShape >{ result };
+    }
+
+    template
+    <
+        typename FirstTensorType,
+        TensorSize FirstTensorSize,
+        typename SecondTensorType,
+        TensorSize SecondTensorSize
+    >
+    auto dotMultiply
+    (
+        nn::Tensor< FirstTensorType, nn::Shape< FirstTensorSize >  >  const & firstTensor,
+        nn::Tensor< SecondTensorType, nn::Shape< SecondTensorSize > > const & secondTensor
+    )
+    {
+        static_assert( FirstTensorSize == SecondTensorSize, "Wrong dimensions for multiplication" );
+
+        constexpr TensorSize commonSize = FirstTensorSize;
+
+        using CommonType = std::common_type_t< FirstTensorType, SecondTensorType >;
+
+        CommonType result{ 0 };
+
+        for ( int i = 0; i < commonSize; ++i )
+        {
+            result += firstTensor[ i ].get() * secondTensor[ i ].get();
+        }
+
+        return nn::Scalar< CommonType >{ result };
+    }
+
 
 
 } // namespace nn
