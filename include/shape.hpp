@@ -2,6 +2,7 @@
 
 #include "constants.hpp"
 
+#include <array>
 #include <type_traits>
 
 namespace nn
@@ -19,6 +20,16 @@ private:
 public:
     using SubShape = Shape< SUBSIZES... >;
 
+    static constexpr std::size_t numberOfElements() noexcept
+    {
+        TensorSize numberOfElements{ 1 };
+        for ( auto const & size : shape_ )
+        {
+            numberOfElements *= size;
+        }
+        return numberOfElements;
+    }
+
     static inline constexpr auto const& shape() noexcept
     {
         return shape_;
@@ -29,7 +40,7 @@ public:
         return shape_[ index ];
     }
 
-    static constexpr int dimensions() noexcept
+    static constexpr std::size_t dimensions() noexcept
     {
         return sizeof...( SUBSIZES ) + 1;
     }
@@ -39,6 +50,11 @@ template<>
 class Shape<>
 {
 public:
+    static constexpr std::size_t numberOfElements() noexcept
+    {
+        return 1;
+    }
+
     static inline constexpr int dimensions() noexcept
     {
         return 0;
@@ -46,10 +62,10 @@ public:
 
 };
 
-} // namespace nn
-
 template< typename > struct is_shape : std::false_type {};
 template< TensorSize... SIZES > struct is_shape< nn::Shape< SIZES... > > : std::true_type {};
 
 template< typename T >
 inline constexpr bool is_shape_v = is_shape< T >::value;
+
+} // namespace nn

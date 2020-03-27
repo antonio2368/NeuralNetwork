@@ -25,6 +25,7 @@ TEST( scalarTest, get )
 {
     nn::Scalar< int > scalarTest;
     ASSERT_EQ( scalarTest.get(), 0 );
+    ASSERT_EQ( scalarTest, 0 );
 }
 
 TEST( tensorTest, indexOperator )
@@ -44,12 +45,4 @@ TEST( tensorTest, size )
     ASSERT_EQ( test.size(), 2 );
 
     ASSERT_EQ( test[ 0 ].size(), 1 );
-}
-
-TEST( tensorTest, initializeFromContainer )
-{
-    std::array< std::array< int, 3>, 2 > vector{ { { 1, 2, 3 }, { 1, 2, 3 } } };
-    nn::Tensor< int, nn::Shape< 2, 3 > > tensor{ vector };
-
-    std::cout << tensor[1][1] << '\n';
 }

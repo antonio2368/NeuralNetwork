@@ -16,8 +16,8 @@ template< typename T,
         >
 class Layer
 {
-    static_assert( is_shape_v< InputShape >, "Input shape not valid" );
-    static_assert( is_shape_v< OutputShape >, "Output shape not valid" );
+    static_assert( nn::is_shape_v< InputShape >, "Input shape not valid" );
+    static_assert( nn::is_shape_v< OutputShape >, "Output shape not valid" );
 
 public:
     constexpr auto const& inputShape() const noexcept

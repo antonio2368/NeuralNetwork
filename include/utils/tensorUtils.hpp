@@ -5,12 +5,21 @@
 namespace nn
 {
 
+namespace utils
+{
+
+template< typename T >
+void printTensor( nn::Scalar< T > const & scalar )
+{
+    std::cout << scalar.get();
+}
+
 template< typename Tensor >
 void printTensor( Tensor const & tensor )
 {
     static_assert( nn::is_tensor_v< Tensor >, "Can only print tensor!" );
 
-      if constexpr ( Tensor::dimensions() == 2 )
+    if constexpr ( Tensor::dimensions() == 2 )
     {
         std::cout << "[\n";
     }
@@ -41,10 +50,6 @@ void printTensor( Tensor const & tensor )
     }
 }
 
-template< typename T >
-void printTensor( nn::Scalar< T > const & scalar )
-{
-    std::cout << scalar.get();
-}
+} //namespace utils
 
 } //namespace nn

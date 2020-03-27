@@ -13,5 +13,5 @@ TEST( utilsTest, printTensor )
     };
     nn::Tensor< int, nn::Shape< 2, 2, 2 > > tensor{ data };
 
-    nn::printTensor( tensor );
+    nn::utils::printTensor( tensor );
 }

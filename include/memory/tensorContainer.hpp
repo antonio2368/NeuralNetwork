@@ -3,6 +3,7 @@
 #include "constants.hpp"
 #include "initializers/initializer.hpp"
 #include "initializers/zeroInitializer.hpp"
+
 #include <array>
 #include <optional>
 #include <cassert>
@@ -26,7 +27,7 @@ private:
 
     void createTensors( nn::initializer::InitializerBase< TensorElementType > const& initializer )
     {
-        std::transform( data_.begin(), data_.end(), data_.begin(), [ &initializer ]( auto& ){ return Tensor{ initializer }; } );
+        std::transform( std::begin( data_ ), std::end( data_ ), std::begin( data_ ), [ &initializer ]( auto& ){ return Tensor{ initializer }; } );
     }
 public:
     TensorContainer( nn::initializer::InitializerBase< TensorElementType > const& initializer = nn::initializer::ZeroInitializer< TensorElementType >{} )

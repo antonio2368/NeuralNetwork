@@ -1,7 +1,10 @@
 #include "tensor.hpp"
 
-#include <type_traits>
 #include <iostream>
+
+#include <algorithm>
+#include <numeric>
+#include <type_traits>
 
 namespace nn
 {
@@ -39,7 +42,7 @@ namespace nn
             {
                 for ( int k = 0; k < commonSize; ++k )
                 {
-                    result[ i ][ j ] += firstTensor[ i ][ k ].get() * secondTensor[ k ][ j ].get();
+                    result[ i ][ j ] += firstTensor[ i ][ k ] * secondTensor[ k ][ j ];
                 }
             }
         }
@@ -76,7 +79,7 @@ namespace nn
         {
             for ( int j = 0; j < commonSize; ++j )
             {
-                result[ i ] += firstTensor[ j ].get() * secondTensor[ j ][ i ].get();
+                result[ i ] += firstTensor[ j ] * secondTensor[ j ][ i ];
             }
         }
 
@@ -112,7 +115,7 @@ namespace nn
         {
             for ( int j = 0; j < commonSize; ++j )
             {
-                result[ i ] = firstTensor[ i ][ j ].get() * secondTensor[ j ].get();
+                result[ i ] += firstTensor[ i ][ j ] * secondTensor[ j ];
             }
         }
 
@@ -142,12 +145,25 @@ namespace nn
 
         for ( int i = 0; i < commonSize; ++i )
         {
-            result += firstTensor[ i ].get() * secondTensor[ i ].get();
+            result += firstTensor[ i ] * secondTensor[ i ];
         }
 
         return nn::Scalar< CommonType >{ result };
     }
 
 
+    template< typename OutputShape, typename TensorType, typename TensorShape >
+    auto reshape( [[maybe_unused]] nn::Tensor< TensorType, TensorShape > inputTensor )
+    {
+        static_assert( nn::is_shape_v< OutputShape >, "Template argument should be a shape" );
 
+        // constexpr in c++20
+        // constexpr std::size_t numberOfElements = std::accumulate( TensorShape::shape().begin(), TensorShape::shape().end(), static_cast< TensorType >( 1 ), std::multiplies< TensorType >() );
+
+        constexpr std::size_t inputNumberOfElements = TensorShape::numberOfElements();
+        constexpr std::size_t outputNumberOfElements = OutputShape::numberOfElements();
+
+        static_assert( inputNumberOfElements == outputNumberOfElements, "Different number of elements in input tensor and expected number of elements in output tensor" );
+
+    }
 } // namespace nn

@@ -8,32 +8,37 @@
 
 TEST( operationsTest, dotMultiply )
 {
-    std::vector< std::vector< int > > firstData{ { 1, 2, 3 }, { 2, 3, 4 } };
-    nn::Tensor< int, nn::Shape< 2, 3 > > firstOperand{ firstData };
+    std::vector< std::vector< int > > firstOperandData{ { 1, 2, 3 }, { 2, 3, 4 } };
+    nn::Tensor< int, nn::Shape< 2, 3 > > firstOperand{ firstOperandData };
 
-    std::vector< std::vector< int > > secondData{ { 3, 2 }, { 1, 4 }, { 5, 6 } };
-    nn::Tensor< int, nn::Shape< 3, 2 > > secondOperand{ secondData };
+    std::vector< std::vector< int > > secondOperandData{ { 3, 2 }, { 1, 4 }, { 5, 6 } };
+    nn::Tensor< int, nn::Shape< 3, 2 > > secondOperand{ secondOperandData };
 
-    nn::Tensor< int, nn::Shape< 2, 2 > > result =  nn::dotMultiply( firstOperand, secondOperand );
+    nn::Tensor< int, nn::Shape< 2, 2 > > result = nn::dotMultiply( firstOperand, secondOperand );
 
-    ASSERT_EQ( result[ 0 ][ 0 ].get(), 20 );
-    ASSERT_EQ( result[ 0 ][ 1 ].get(), 28 );
+    ASSERT_EQ( result[ 0 ][ 0 ], 20 );
+    ASSERT_EQ( result[ 0 ][ 1 ], 28 );
+    ASSERT_EQ( result[ 1 ][ 0 ], 29 );
+    ASSERT_EQ( result[ 1 ][ 1 ], 40 );
 
-    nn::printTensor( firstOperand );
-    std::cout << '\n';
-    nn::printTensor( secondOperand );
-    std::cout << '\n';
-    nn::printTensor( result );
-    std::cout << '\n';
+    auto const & singleRowOperand = result[ 0 ];
 
-    std::vector< int > singleRowData{ 1, 2, 3 };
-    nn::Tensor< int, nn::Shape< 3 > > singleRowTensor{ singleRowData };
-    nn::Tensor< int, nn::Shape< 2 > > anotherResult = nn::dotMultiply( singleRowTensor, secondOperand );
+    auto singleRowResult = nn::dotMultiply( result, singleRowOperand );
+    ASSERT_EQ( singleRowResult[ 0 ], 1184 );
+    ASSERT_EQ( singleRowResult[ 1 ], 1700 );
 
-    nn::printTensor( anotherResult );
+    singleRowResult = nn::dotMultiply( singleRowOperand, result );
+    ASSERT_EQ( singleRowResult[ 0 ], 1212 );
+    ASSERT_EQ( singleRowResult[ 1 ], 1680 );
 
-    nn::Scalar< int > scalarResult = nn::dotMultiply( singleRowTensor, singleRowTensor );
+    auto scalarResult = nn::dotMultiply( singleRowOperand, singleRowOperand );
+    ASSERT_EQ( scalarResult, 1184 );
+}
 
-    nn::printTensor( scalarResult );
+TEST( operationsTest, reshape )
+{
+    std::vector< std::vector< std::vector< int > > > tensorData{ { { 1, 2 }, { 2, 3 } }, { { 4, 5 }, { 6, 7 } } };
+    nn::Tensor< int, nn::Shape< 2, 2, 2 > > tensor{ tensorData };
 
+    nn::reshape< nn::Shape< 8 > >( tensor );
 }

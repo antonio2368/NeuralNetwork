@@ -14,7 +14,7 @@ namespace nn
 template< typename T, typename Shape = Shape<> >
 class Tensor
 {
-    static_assert( is_shape_v< Shape >, "Second argument of tensor should be of class Shape" );
+    static_assert( nn::is_shape_v< Shape >, "Second argument of tensor should be of class Shape" );
     static_assert( std::is_arithmetic_v< T >, "Tensor can hold only arithmetic types!" );
 
 private:
