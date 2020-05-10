@@ -6,6 +6,8 @@
 #include "typeTraits.hpp"
 #include "shape.hpp"
 
+#include "range/v3/view/span.hpp"
+
 #include <type_traits>
 
 namespace nn
@@ -25,6 +27,20 @@ namespace
     {
         return type == TensorType::view || type == TensorType::constView;
     }
+
+    template< typename Shape >
+    constexpr bool isValidShape() noexcept
+    {
+        for ( auto const & size : Shape::shape() )
+        {
+            if ( size <= 0 )
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 template< typename TensorElementType, typename TensorShape, TensorType type = TensorType::regular >
@@ -35,6 +51,7 @@ public:
     using ElementType = TensorElementType;
 
     static_assert( nn::is_shape_v< Shape >, "Second argument of tensor should be of class Shape" );
+    static_assert( isValidShape< Shape >(), "All shape sizes should be numbers greater than 0." );
     static_assert( std::is_arithmetic_v< ElementType >, "Tensor can hold only arithmetic types!" );
 private:
     std::conditional_t< isView< type >(), memory::TensorContainerView< ElementType >, memory::TensorContainer< ElementType, Shape::numberOfElements() > > data_;
@@ -49,9 +66,9 @@ public:
         : data_{ initializer }
     {}
 
-    template< typename Container, TensorType TT = type >
-    constexpr Tensor( Container const & container, std::enable_if_t< !isView< TT >() > * = 0 )
-        : data_{ container }
+    template< TensorType TT = type >
+    constexpr Tensor( ranges::span< ElementType const > const span, std::enable_if_t< !isView< TT >() > * = 0 )
+        : data_{ span }
     {}
 
     template< typename ET = ElementType, TensorType TT = type >
@@ -118,7 +135,7 @@ public:
         }
         else
         {
-            return { data_.getView( ix * Shape::size( 1 ), Shape::size( 1 ) ) };
+            return { data_.getView( ix * Shape::stride( 0 ), Shape::stride( 0 ) ) };
         }
 
     }
@@ -139,8 +156,13 @@ public:
         }
         else
         {
-            return { data_.getView( ix * Shape::size( 1 ), Shape::size( 1 ) ) };
+            return { data_.getView( ix * Shape::stride( 0 ), Shape::stride( 0 ) ) };
         }
+    }
+
+    constexpr ranges::span< ElementType const > getAllElementsView() const noexcept
+    {
+        return data_.getSpan();
     }
 
     template<typename, typename, TensorType>

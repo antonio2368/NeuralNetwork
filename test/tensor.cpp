@@ -11,7 +11,7 @@ TEST( tensorTest, dimensionNum )
 
 TEST( tensorTest, initializer )
 {
-    nn::Tensor< int, nn::Shape< 2, 1 > > const test;
+    nn::Tensor< int, nn::Shape< 1920, 1080 > > const test;
     ASSERT_EQ( test[0][0], 0 );
 }
 

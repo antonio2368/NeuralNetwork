@@ -37,10 +37,80 @@ public:
         return *( data_.data() + index );
     }
 
+    constexpr ranges::span< T const > getSpan() const noexcept
+    {
+        return data_;
+    }
+
     template< typename, TensorSize >
     friend class TensorContainer;
 };
 
+namespace
+{
+    static constexpr TensorSize limit = 10000;
+}
+
+template< typename T, TensorSize size = 0 >
+class DynamicElement
+{
+private:
+    std::unique_ptr< T[] > data_;
+
+    void copyElements( std::unique_ptr< T[] > const & source, std::unique_ptr< T[] > & destination ) noexcept
+    {
+        for ( std::size_t i = 0; i < size; ++i )
+        {
+            destination[ i ] = source[ i ];
+        }
+    }
+public:
+    constexpr operator T*() const noexcept
+    {
+        return data_.get();
+    }
+
+    constexpr DynamicElement() : data_{ new T[ size ] }
+    {}
+
+    constexpr DynamicElement( DynamicElement< T, size > const & other ) : data_{ new T[ size ] }
+    {
+        copyElements( other.data_, data_ );
+    }
+
+    constexpr DynamicElement< T, size >& operator=( DynamicElement< T, size > const & other ) noexcept
+    {
+        if ( &other != this )
+        {
+            copyElements( other.data_, data_ );
+        }
+
+        return *this;
+    }
+
+    constexpr DynamicElement( DynamicElement< T, size > && other ) : data_{ std::move( other.data_ ) }
+    {}
+
+    constexpr DynamicElement< T, size >& operator=( DynamicElement< T, size > && other ) noexcept
+    {
+        if( &other != this )
+        {
+            data_ = std::move( other.data_ );
+        }
+
+        return *this;
+    }
+
+    constexpr auto begin() noexcept
+    {
+        return std::next( data_.get(), 0 );
+    }
+
+    constexpr auto end() noexcept
+    {
+        return std::next( data_.get(), size );
+    }
+};
 /*
  * Container class for tensors
  */
@@ -48,7 +118,7 @@ template< typename T, TensorSize size = 0 >
 class TensorContainer
 {
 private:
-    mutable std::array< T, size > data_;
+    mutable std::conditional_t< ( size > limit ), DynamicElement< T, size >, std::array< T, size > > data_;
 
     template< typename Container >
     constexpr void assignData( Container const & container ) noexcept
@@ -68,8 +138,7 @@ public:
         std::transform( std::begin( data_ ), std::end( data_ ), std::begin( data_ ), [ &initializer ]( auto const & ){ return initializer.getValue(); } );
     }
 
-    template< typename Container >
-    constexpr TensorContainer( Container const & container ) noexcept
+    constexpr TensorContainer( ranges::span< T const > const container ) noexcept
     {
         assignData( container );
     }
@@ -132,12 +201,28 @@ public:
 
     constexpr auto getView( std::size_t const start, std::size_t const count = 1 ) const noexcept
     {
-        return TensorContainerView< T >{ ranges::span< T >{ data_ }.subspan( start, count ) };
+        if constexpr ( size > limit )
+        {
+            return TensorContainerView< T >{ ranges::span< T >{ data_, size }.subspan( start, count ) };
+        }
+        else
+        {
+            return TensorContainerView< T >{ ranges::span< T >{ data_ }.subspan( start, count ) };
+        }
     }
 
     constexpr auto& operator[]( std::size_t const index ) const noexcept
     {
         return data_[ index ];
+    }
+
+    constexpr ranges::span< T const > getSpan() const noexcept
+    {
+        if constexpr ( size > limit )
+        {
+            return ranges::span< T >{ data_, size };
+        }
+        return data_;
     }
 };
 

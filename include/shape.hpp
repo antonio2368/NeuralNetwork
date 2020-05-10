@@ -15,8 +15,8 @@ template< TensorSize LEAD_SIZE, TensorSize... SUBSIZES >
 class Shape< LEAD_SIZE, SUBSIZES... >
 {
 private:
-    static constexpr std::array< TensorSize, sizeof...( SUBSIZES ) + 1 > shape_{ { LEAD_SIZE, SUBSIZES... } };
-
+    static constexpr std::size_t numberOfSizes() noexcept { return sizeof...( SUBSIZES ) + 1; }
+    static constexpr std::array< TensorSize, numberOfSizes() > shape_{ { LEAD_SIZE, SUBSIZES... } };
 public:
     using SubShape = Shape< SUBSIZES... >;
 
@@ -42,7 +42,21 @@ public:
 
     static constexpr std::size_t dimensions() noexcept
     {
-        return sizeof...( SUBSIZES ) + 1;
+        return numberOfSizes();
+    }
+
+    static constexpr std::size_t stride( std::size_t const index ) noexcept
+    {
+        std::size_t currentIndex{ numberOfSizes() - 1 };
+        std::size_t currentStride{ 1u };
+
+        while ( currentIndex > index )
+        {
+            currentStride *= shape_[ currentIndex ];
+            --currentIndex;
+        }
+
+        return currentStride;
     }
 };
 

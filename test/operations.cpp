@@ -33,10 +33,10 @@ TEST( operationsTest, dotMultiply )
     ASSERT_EQ( scalarResult, 1184 );
 }
 
-// TEST( operationsTest, reshape )
-// {
-//     std::vector< std::vector< std::vector< int > > > tensorData{ { { 1, 2 }, { 2, 3 } }, { { 4, 5 }, { 6, 7 } } };
-//     nn::Tensor< int, nn::Shape< 2, 2, 2 > > tensor{ tensorData };
+TEST( operationsTest, reshape )
+{
+    nn::Tensor< int, nn::Shape< 2, 2, 2 > > tensor{ 0, 1, 2, 3, 4, 5, 6, 7 };
 
-//     nn::reshape< nn::Shape< 8 > >( tensor );
-// }
+    auto const reshaped = nn::reshape< nn::Shape< 8 > >( tensor );
+    ASSERT_EQ( reshaped[ 5 ], tensor[ 1 ][ 0 ][ 1 ] );
+}

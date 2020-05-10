@@ -159,19 +159,13 @@ namespace nn
         return result;
     }
 
-
-    template< typename OutputShape, typename TensorType, typename TensorShape >
-    auto reshape( [[maybe_unused]] nn::Tensor< TensorType, TensorShape > inputTensor )
+    template< typename OutputShape, typename ElementType, typename InputShape, TensorType TensorType >
+    constexpr
+    std::enable_if_t< nn::is_shape_v< OutputShape >, nn::Tensor< ElementType, OutputShape, TensorType::regular > >
+    reshape( nn::Tensor< ElementType, InputShape, TensorType > const & inputTensor )
     {
-        static_assert( nn::is_shape_v< OutputShape >, "Template argument should be a shape" );
+        static_assert( InputShape::numberOfElements() == OutputShape::numberOfElements(), "Different number of elements in input tensor and expected number of elements in output tensor" );
 
-        // constexpr in c++20
-        // constexpr std::size_t numberOfElements = std::accumulate( TensorShape::shape().begin(), TensorShape::shape().end(), static_cast< TensorType >( 1 ), std::multiplies< TensorType >() );
-
-        constexpr std::size_t inputNumberOfElements = TensorShape::numberOfElements();
-        constexpr std::size_t outputNumberOfElements = OutputShape::numberOfElements();
-
-        static_assert( inputNumberOfElements == outputNumberOfElements, "Different number of elements in input tensor and expected number of elements in output tensor" );
-
+        return nn::Tensor< ElementType, OutputShape, TensorType::regular >( inputTensor.getAllElementsView() );
     }
 } // namespace nn
