@@ -4,6 +4,9 @@
 #include "initializers/initializer.hpp"
 #include "initializers/zeroInitializer.hpp"
 
+#include <range/v3/view/span.hpp>
+#include <range/v3/view/enumerate.hpp>
+
 #include <array>
 #include <optional>
 #include <cassert>
@@ -15,158 +18,126 @@ namespace nn
 namespace memory
 {
 
+template< typename T >
+class TensorContainerView
+{
+private:
+    ranges::span< T > data_;
+
+public:
+    constexpr TensorContainerView( ranges::span< T > data ) : data_{ data } {}
+
+    constexpr auto getView( std::size_t const start, std::size_t const count = 1 ) const noexcept
+    {
+        return TensorContainerView< T >{ data_.subspan( start, count ) };
+    }
+
+    constexpr auto& operator[]( std::size_t const index ) const noexcept
+    {
+        return *( data_.data() + index );
+    }
+
+    template< typename, TensorSize >
+    friend class TensorContainer;
+};
+
 /*
  * Container class for tensors
  */
-template< typename Tensor, TensorSize SIZE = 0 >
+template< typename T, TensorSize size = 0 >
 class TensorContainer
 {
-    using TensorElementType = typename Tensor::ElementType;
 private:
-    std::array < Tensor, SIZE  > data_;
+    mutable std::array< T, size > data_;
 
-    void createTensors( nn::initializer::InitializerBase< TensorElementType > const& initializer )
+    template< typename Container >
+    constexpr void assignData( Container const & container ) noexcept
     {
-        std::transform( std::begin( data_ ), std::end( data_ ), std::begin( data_ ), [ &initializer ]( auto& ){ return Tensor{ initializer }; } );
+        assert( container.size() == size );
+
+        auto dataIterator{ std::begin( data_ ) };
+        for ( auto const & element : container )
+        {
+            *dataIterator++ = element;
+        }
     }
+
 public:
-    TensorContainer( nn::initializer::InitializerBase< TensorElementType > const& initializer = nn::initializer::ZeroInitializer< TensorElementType >{} )
+    constexpr TensorContainer( nn::initializer::InitializerBase< T > const& initializer = nn::initializer::ZeroInitializer< T >{} )
     {
-        createTensors( initializer );
+        std::transform( std::begin( data_ ), std::end( data_ ), std::begin( data_ ), [ &initializer ]( auto const & ){ return initializer.getValue(); } );
     }
 
     template< typename Container >
-    TensorContainer( Container const & container )
+    constexpr TensorContainer( Container const & container ) noexcept
     {
-        assert( std::size( container ) == SIZE );
-        std::transform( std::begin( container ), std::end( container ), std::begin( data_ ), []( auto const& elem )
+        assignData( container );
+    }
+
+    constexpr TensorContainer( std::initializer_list< T > const & initList ) noexcept
+    {
+        assignData( initList );
+    }
+
+    constexpr TensorContainer( TensorContainerView< T > const & other )
+    {
+        assert( other.data_.size() == size );
+
+        for ( auto const & [ index, element ] : other.data_ | ranges::views::enumerate )
         {
-            using ContainerValueType = typename Container::value_type;
-            if constexpr ( std::is_arithmetic_v< ContainerValueType > )
+            data_[ index ] = element;
+        }
+    }
+
+    constexpr TensorContainer& operator=( TensorContainerView< T > const & other ) noexcept
+    {
+        assert( other.data_.size() == size );
+
+        if ( &other != this )
+        {
+            for ( auto const & [ index, element ] : other.data_ | ranges::enumerate )
             {
-                return Tensor{ static_cast< TensorElementType >( elem ) };
+                data_[ index ] = element;
             }
-            else
-            {
-                return Tensor{ elem };
-            }
-
-        });
-    }
-
-    /* Const index operator for the tensor container.
-     * ix - index of the element
-     */
-    [[ nodiscard ]]
-    Tensor const& operator[]( std::size_t const ix ) const noexcept
-    {
-        // TODO: add index bounds check
-        return data_[ ix ];
-    }
-
-    /* Index operator for the tensor container.
-     * ix - index of the element
-     */
-    Tensor& operator[]( std::size_t const ix ) noexcept
-    {
-        // TODO: add index bounds check
-        return data_[ ix ];
-    }
-};
-
-template< typename Tensor >
-class TensorContainer< Tensor, Dynamic >
-{
-    using TensorElementType = typename Tensor::ElementType;
-private:
-    std::optional< std::size_t > size_;
-    std::vector< Tensor > data_;
-public:
-    TensorContainer() = default;
-
-    TensorContainer( TensorContainer< Tensor > const& other ) : size_{ other.size_ }
-    {
-        memcpy( data_, other.data_, size_ );
-    }
-
-    template< typename... Args >
-    void initialize( Args&&... args )
-    {
-        assert( size_ );
-        assert( data_.capacity() == size_.value() );
-
-        for ( int i = 0; i < size_; ++i )
-        {
-            data_.emplace_back( std::forward< Args >( args )... );
         }
+
+        return this;
     }
 
-    void setSize( std::size_t const size ) noexcept
-    {
-        assert( !size );
-
-        size_.emplace( size );
-        data_.resize( size_.value() );
-    }
-
-    void resetSize() noexcept
-    {
-        assert( size_ );
-        size_.reset();
-        data_.clear();
-    }
-
-    std::optional< std::size_t > size() const noexcept
-    {
-        return size_;
-    }
-
-    [[ nodiscard ]]
-    Tensor const& operator[]( std::size_t const ix ) const noexcept
-    {
-        assert( size_ );
-
-        if ( ix < size_ )
-        {
-            return data_[ ix ];
-        }
-    }
-
-    Tensor& operator[]( std::size_t const ix ) noexcept
-    {
-        assert( size_ );
-
-        if ( ix < size_ )
-        {
-            return data_[ ix ];
-        }
-    }
-};
-
-template< typename T >
-class TensorContainer< T >
-{
-private:
-    T data_;
-public:
-    TensorContainer( nn::initializer::InitializerBase< T > const& initializer = nn::initializer::ZeroInitializer< T >{} )
-    {
-        data_ = initializer.getValue();
-    }
-
-    TensorContainer( T value ) : data_{ value }
+    constexpr TensorContainer( TensorContainer< T, size > const & other ) : data_{ other.data_ }
     {}
 
-    [[ nodiscard ]]
-    T get() const noexcept
+    constexpr TensorContainer< T, size >& operator=( TensorContainer< T, size > const & other ) noexcept
     {
-        return data_;
+        if ( &other != this )
+        {
+            data_ = other.data_;
+        }
+
+        return *this;
     }
 
-    TensorContainer< T >& operator=( T&& data ) noexcept
+    constexpr TensorContainer( TensorContainer< T, size > && other ) : data_{ std::move( other.data_ ) }
+    {}
+
+    constexpr TensorContainer< T, size >& operator=( TensorContainer< T, size > && other ) noexcept
     {
-        data_ = std::move( data );
+        if( &other != this )
+        {
+            data_ = std::move( other.data_ );
+        }
+
         return *this;
+    }
+
+    constexpr auto getView( std::size_t const start, std::size_t const count = 1 ) const noexcept
+    {
+        return TensorContainerView< T >{ ranges::span< T >{ data_ }.subspan( start, count ) };
+    }
+
+    constexpr auto& operator[]( std::size_t const index ) const noexcept
+    {
+        return data_[ index ];
     }
 };
 

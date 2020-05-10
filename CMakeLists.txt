@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.11.0)
-project(Math VERSION 0.1.0)
+cmake_minimum_required(VERSION 3.16.0)
+project(NeuralNetwork VERSION 0.1.0)
+
+include(FetchContent)
 
 set(PROJECT_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test")
 set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -7,6 +9,14 @@ set(UTIL_INCLUDE_DIR "/home/antonio/projects/util" CACHE STRING "path to the uti
 
 include(CTest)
 enable_testing()
+
+FetchContent_Declare(
+    ranges
+    GIT_REPOSITORY  https://github.com/ericniebler/range-v3.git
+    GIT_TAG         0.10.0
+)
+
+FetchContent_MakeAvailable(ranges)
 
 add_subdirectory("${PROJECT_TEST_DIR}")
 

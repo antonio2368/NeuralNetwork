@@ -11,30 +11,88 @@
 namespace nn
 {
 
-template< typename T, typename Shape = Shape<> >
+enum class TensorType : std::uint8_t
+{
+    regular = 0,
+    view,
+    constView
+};
+
+namespace
+{
+    template< TensorType type >
+    constexpr bool isView() noexcept
+    {
+        return type == TensorType::view || type == TensorType::constView;
+    }
+}
+
+template< typename TensorElementType, typename TensorShape, TensorType type = TensorType::regular >
 class Tensor
 {
-    static_assert( nn::is_shape_v< Shape >, "Second argument of tensor should be of class Shape" );
-    static_assert( std::is_arithmetic_v< T >, "Tensor can hold only arithmetic types!" );
+public:
+    using Shape       = TensorShape;
+    using ElementType = TensorElementType;
 
+    static_assert( nn::is_shape_v< Shape >, "Second argument of tensor should be of class Shape" );
+    static_assert( std::is_arithmetic_v< ElementType >, "Tensor can hold only arithmetic types!" );
 private:
-    memory::TensorContainer< Tensor< T,  typename Shape::SubShape >, Shape::size( 0 ) > data_;
+    std::conditional_t< isView< type >(), memory::TensorContainerView< ElementType >, memory::TensorContainer< ElementType, Shape::numberOfElements() > > data_;
+
+    template< typename ET = ElementType, TensorType TT = type >
+    constexpr Tensor( memory::TensorContainerView< ET > && containerView, std::enable_if_t< isView< TT >() > * = 0 ) : data_{ std::move( containerView ) }
+    {}
 
 public:
-    using ElementType = T;
-
-    using TensorShape = Shape;
-
-    Tensor( nn::initializer::InitializerBase< T > const & initializer = nn::initializer::ZeroInitializer< T >{} )
+    template< typename ET = ElementType, TensorType TT = type >
+    constexpr Tensor( nn::initializer::InitializerBase< ET > const & initializer = nn::initializer::ZeroInitializer< ET >{}, std::enable_if_t< !isView< TT >() > * = 0 )
         : data_{ initializer }
     {}
 
-    template< typename Container >
-    Tensor( Container const& container )
+    template< typename Container, TensorType TT = type >
+    constexpr Tensor( Container const & container, std::enable_if_t< !isView< TT >() > * = 0 )
         : data_{ container }
     {}
 
-    std::size_t size() const noexcept
+    template< typename ET = ElementType, TensorType TT = type >
+    constexpr Tensor( std::initializer_list< ET > const initList, std::enable_if_t< !isView< TT >() > * = 0 )
+        : data_{ initList }
+    {}
+
+    template< TensorType TT = type, TensorType otherTensorType >
+    constexpr Tensor( Tensor< ElementType, Shape, otherTensorType > const & other, std::enable_if_t< !isView< TT >() > * = 0 )
+        : data_{ other.data_ }
+    {}
+
+    template< TensorType TT = type, TensorType otherTensorType >
+    constexpr
+    std::enable_if_t< !isView< TT >(), Tensor< ElementType, Shape, TensorType::regular > > operator=( Tensor< ElementType, Shape, otherTensorType > const & other ) noexcept
+    {
+        if ( &other != this )
+        {
+            data_ = other.data_;
+        }
+
+        return *this;
+    }
+
+    template< TensorType TT = type  >
+    constexpr Tensor( Tensor< ElementType, Shape, TensorType::regular > && other, std::enable_if_t< !isView< TT >() > * = 0  )
+        : data_{ std::move( other.data_ ) }
+    {}
+
+    template< TensorType TT = type >
+    constexpr
+    std::enable_if_t< !isView< TT >(), Tensor< ElementType, Shape, TensorType::regular > > operator=( Tensor< ElementType, Shape, TensorType::regular > && other ) noexcept
+    {
+        if ( &other != this )
+        {
+            data_ = std::move( other );
+        }
+        return *this;
+    }
+
+    constexpr std::size_t size() const noexcept
     {
         return Shape::size( 0 );
     }
@@ -44,71 +102,58 @@ public:
         return Shape::dimensions();
     }
 
-    auto& operator[]( std::size_t const ix ) noexcept
+    constexpr
+    std::conditional_t
+    <
+        Shape::dimensions() == 1,
+        std::conditional_t< type == TensorType::view, ElementType &, ElementType const & >,
+        Tensor< ElementType, typename Shape::SubShape, type != TensorType::view ? TensorType::constView : TensorType::view >
+    >
+    operator[]( std::size_t const ix ) const noexcept
     {
         assert( ix < Shape::size( 0 ) );
-        return data_[ ix ];
+        if constexpr ( Shape::dimensions() == 1 )
+        {
+            return data_[ ix ];
+        }
+        else
+        {
+            return { data_.getView( ix * Shape::size( 1 ), Shape::size( 1 ) ) };
+        }
+
     }
 
-    auto const& operator[]( std::size_t const ix ) const noexcept
+    constexpr
+    std::conditional_t
+    <
+        Shape::dimensions() == 1,
+        std::conditional_t< type == TensorType::constView, ElementType const &, ElementType & >,
+        Tensor< ElementType, typename Shape::SubShape, type == TensorType::constView ? TensorType::constView : TensorType::view >
+    >
+    operator[]( std::size_t const ix ) noexcept
     {
         assert( ix < Shape::size( 0 ) );
-        return data_[ ix ];
+        if constexpr ( Shape::dimensions() == 1 )
+        {
+            return data_[ ix ];
+        }
+        else
+        {
+            return { data_.getView( ix * Shape::size( 1 ), Shape::size( 1 ) ) };
+        }
     }
+
+    template<typename, typename, TensorType>
+    friend class Tensor;
 };
-
-// scalar tensor
-template< typename T >
-class Tensor< T >
-{
-    static_assert( std::is_arithmetic_v< T >, "Tensor can hold only arithmetic types!" );
-
-private:
-    memory::TensorContainer< T > data_;
-
-public:
-     using ElementType = T;
-
-    Tensor( nn::initializer::InitializerBase< T > const & initializer = nn::initializer::ZeroInitializer< T >{} )
-        : data_{ initializer }
-    {}
-
-    Tensor( T value ) : data_{ value }
-    {}
-
-    T get() const noexcept
-    {
-        return data_.get();
-    }
-
-    static constexpr std::size_t dimensions() noexcept
-    {
-        return Shape<>::dimensions();
-    }
-
-    Tensor< T >& operator=( T&& data )
-    {
-        data_ = std::move( data );
-        return *this;
-    }
-
-    operator T() const noexcept
-    {
-        return data_.get();
-    }
-};
-
-template< typename T >
-using Scalar = Tensor< T >;
 
 // type trait
 
 template< typename > struct is_tensor : std::false_type {};
-template< typename T, typename Shape > struct is_tensor< nn::Tensor< T, Shape > > : std::true_type {};
-template< typename T > struct is_tensor< nn::Tensor< T > > : std::true_type {};
+template< typename ElementType, typename Shape, TensorType type > struct is_tensor< nn::Tensor< ElementType, Shape, type > > : std::true_type {};
 
-template< typename T >
-inline constexpr bool is_tensor_v = is_tensor< T >::value;
+template< typename ElementType >
+inline constexpr bool is_tensor_v = is_tensor< ElementType >::value;
 
 
 } // namespace nn

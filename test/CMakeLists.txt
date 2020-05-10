@@ -13,7 +13,7 @@ function(add_gtest_executable executable_path)
     add_executable(testMain ${executable_path})
 
     set_property(TARGET testMain PROPERTY CXX_STANDARD 17)
-    target_link_libraries(testMain PUBLIC gtest)
+    target_link_libraries(testMain PUBLIC gtest range-v3)
 
     target_compile_options(testMain PRIVATE -Werror -Wall -Wextra)
 
@@ -32,9 +32,9 @@ add_gtest_executable(${PROJECT_TEST_DIR}/main.cpp)
 add_gtest(${PROJECT_TEST_DIR}/memory/tensorContainer.cpp)
 add_gtest(${PROJECT_TEST_DIR}/tensor.cpp)
 add_gtest(${PROJECT_TEST_DIR}/initializers/initializers.cpp)
-add_gtest(${PROJECT_TEST_DIR}/layers.cpp)
+# add_gtest(${PROJECT_TEST_DIR}/layers.cpp)
 add_gtest(${PROJECT_TEST_DIR}/operations.cpp)
-add_gtest(${PROJECT_TEST_DIR}/utils.cpp)
+# add_gtest(${PROJECT_TEST_DIR}/utils.cpp)
 add_gtest(${PROJECT_TEST_DIR}/shape.cpp)
 
 gtest_discover_tests(testMain)

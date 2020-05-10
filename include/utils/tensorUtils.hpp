@@ -8,11 +8,6 @@ namespace nn
 namespace utils
 {
 
-template< typename T >
-void printTensor( nn::Scalar< T > const & scalar )
-{
-    std::cout << scalar.get();
-}
 
 template< typename Tensor >
 void printTensor( Tensor const & tensor )

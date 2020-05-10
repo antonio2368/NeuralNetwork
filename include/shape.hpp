@@ -46,22 +46,6 @@ public:
     }
 };
 
-template<>
-class Shape<>
-{
-public:
-    static constexpr std::size_t numberOfElements() noexcept
-    {
-        return 1;
-    }
-
-    static inline constexpr int dimensions() noexcept
-    {
-        return 0;
-    }
-
-};
-
 template< typename > struct is_shape : std::false_type {};
 template< TensorSize... SIZES > struct is_shape< nn::Shape< SIZES... > > : std::true_type {};
 
