@@ -201,14 +201,7 @@ public:
 
     constexpr auto getView( std::size_t const start, std::size_t const count = 1 ) const noexcept
     {
-        if constexpr ( size > limit )
-        {
-            return TensorContainerView< T >{ ranges::span< T >{ data_, size }.subspan( start, count ) };
-        }
-        else
-        {
-            return TensorContainerView< T >{ ranges::span< T >{ data_ }.subspan( start, count ) };
-        }
+        return TensorContainerView< T >{ ranges::span< T >{ std::begin( data_ ), std::end( data_ ) }.subspan( start, count ) };
     }
 
     constexpr auto& operator[]( std::size_t const index ) const noexcept
@@ -218,11 +211,7 @@ public:
 
     constexpr ranges::span< T const > getSpan() const noexcept
     {
-        if constexpr ( size > limit )
-        {
-            return ranges::span< T >{ data_, size };
-        }
-        return data_;
+        return ranges::span< T >{ std::begin( data_ ), std::end( data_ ) };
     }
 };
 
