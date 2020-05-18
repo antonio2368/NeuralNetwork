@@ -48,7 +48,7 @@ class Tensor
 {
 public:
     using Shape       = TensorShape;
-    using ElementType = TensorElementType;
+    using ElementType = std::remove_cv_t< TensorElementType >;
 
     static_assert( nn::is_shape_v< Shape >, "Second argument of tensor should be of class Shape" );
     static_assert( isValidShape< Shape >(), "All shape sizes should be numbers greater than 0." );
@@ -56,13 +56,13 @@ public:
 private:
     std::conditional_t< isView< type >(), memory::TensorContainerView< ElementType >, memory::TensorContainer< ElementType, Shape::numberOfElements() > > data_;
 
-    template< typename ET = ElementType, TensorType TT = type >
-    constexpr Tensor( memory::TensorContainerView< ET > && containerView, std::enable_if_t< isView< TT >() > * = 0 ) : data_{ std::move( containerView ) }
+    template< TensorType TT = type >
+    constexpr Tensor( memory::TensorContainerView< ElementType > && containerView, std::enable_if_t< isView< TT >() > * = 0 ) : data_{ std::move( containerView ) }
     {}
 
 public:
-    template< typename ET = ElementType, TensorType TT = type >
-    constexpr Tensor( nn::initializer::InitializerBase< ET > const & initializer = nn::initializer::ZeroInitializer< ET >{}, std::enable_if_t< !isView< TT >() > * = 0 )
+    template< TensorType TT = type >
+    constexpr Tensor( nn::initializer::InitializerBase< ElementType > const & initializer = nn::initializer::ZeroInitializer< ElementType >{}, std::enable_if_t< !isView< TT >() > * = 0 )
         : data_{ initializer }
     {}
 
@@ -71,8 +71,8 @@ public:
         : data_{ span }
     {}
 
-    template< typename ET = ElementType, TensorType TT = type >
-    constexpr Tensor( std::initializer_list< ET > const initList, std::enable_if_t< !isView< TT >() > * = 0 )
+    template< TensorType TT = type >
+    constexpr Tensor( std::initializer_list< ElementType > const initList, std::enable_if_t< !isView< TT >() > * = 0 )
         : data_{ initList }
     {}
 
@@ -165,6 +165,11 @@ public:
         return data_.getSpan();
     }
 
+    constexpr ranges::span< ElementType > getAllElementsView() noexcept
+    {
+        return data_.getSpan();
+    }
+
     template<typename, typename, TensorType>
     friend class Tensor;
 };
@@ -176,6 +181,5 @@ template< typename ElementType, typename Shape, TensorType type > struct is_tens
 
 template< typename ElementType >
 inline constexpr bool is_tensor_v = is_tensor< ElementType >::value;
-
 
 } // namespace nn

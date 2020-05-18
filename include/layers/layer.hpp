@@ -10,10 +10,7 @@
 namespace nn
 {
 
-template< typename T,
-          typename InputShape,
-          typename OutputShape
-        >
+template< typename InputShape, typename OutputShape >
 class Layer
 {
     static_assert( nn::is_shape_v< InputShape >, "Input shape not valid" );

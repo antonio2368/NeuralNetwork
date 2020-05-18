@@ -31,6 +31,10 @@ TEST( operationsTest, dotMultiply )
 
     auto scalarResult = nn::dotMultiply( singleRowOperand, singleRowOperand );
     ASSERT_EQ( scalarResult, 1184 );
+
+    auto const result2 = nn::dotMultiply( firstOperand[ 0 ], secondOperand );
+    ASSERT_EQ( result2[ 0 ], 20 );
+    ASSERT_EQ( result2[ 1 ], 28 );
 }
 
 TEST( operationsTest, reshape )
@@ -39,4 +43,24 @@ TEST( operationsTest, reshape )
 
     auto const reshaped = nn::reshape< nn::Shape< 8 > >( tensor );
     ASSERT_EQ( reshaped[ 5 ], tensor[ 1 ][ 0 ][ 1 ] );
+}
+
+TEST( operationTest, elementwiseOperations )
+{
+    nn::Tensor< std::int8_t, nn::Shape< 2, 2, 2 > > const tensor{ 0, 1, 2, 3, 4, 5, 6, 7 };
+
+    auto const added = nn::add( tensor, tensor );
+    ASSERT_EQ( added[ 1 ][ 0 ][ 1 ], 10 );
+
+    auto const added2 = nn::add( tensor[ 0 ], tensor[ 1 ] );
+    ASSERT_EQ( added2[ 0 ][ 1 ], 6 );
+    ASSERT_EQ( added2[ 1 ][ 1 ], 10 );
+
+    auto const subtract = nn::subtract( tensor[ 0 ], tensor[ 1 ] );
+    ASSERT_EQ( subtract[ 0 ][ 1 ], -4 );
+    ASSERT_EQ( subtract[ 1 ][ 1 ], -4 );
+
+    auto const multiplied = nn::multiply( tensor[ 0 ], tensor[ 1 ] );
+    ASSERT_EQ( multiplied[ 0 ][ 1 ], 5 );
+    ASSERT_EQ( multiplied[ 1 ][ 1 ], 21 );
 }

@@ -5,7 +5,7 @@ namespace nn
 {
 
 template< typename T, typename InputShape, int OutputNumber >
-class DenseLayer : public nn::Layer< T, InputShape, Shape< InputShape::size( 0 ), OutputNumber > >
+class DenseLayer : public nn::Layer< InputShape, Shape< InputShape::size( 0 ), OutputNumber > >
 {
     using OutputShape = Shape< InputShape::size( 0 ), OutputNumber >;
 

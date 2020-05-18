@@ -34,10 +34,15 @@ public:
 
     constexpr auto& operator[]( std::size_t const index ) const noexcept
     {
-        return *( data_.data() + index );
+        return data_[ index ];
     }
 
     constexpr ranges::span< T const > getSpan() const noexcept
+    {
+        return data_;
+    }
+
+    constexpr ranges::span< T > getSpan() noexcept
     {
         return data_;
     }
@@ -210,6 +215,11 @@ public:
     }
 
     constexpr ranges::span< T const > getSpan() const noexcept
+    {
+        return ranges::span< T const >{ std::cbegin( data_ ), std::cend( data_ ) };
+    }
+
+    constexpr ranges::span< T > getSpan() noexcept
     {
         return ranges::span< T >{ std::begin( data_ ), std::end( data_ ) };
     }

@@ -7,19 +7,28 @@
 namespace nn
 {
 
-template< typename T, typename InputShape >
-class InputLayer : public Layer< T, InputShape, InputShape >
+template< typename InputShape >
+class InputLayer : public Layer< InputShape, InputShape >
 {
-    static_assert( InputShape::dimensions() == 4, "Input shape can only have 4 dimensions" );
+    static_assert( InputShape::dimensions() == 3, "Shape of the input can only have 3 dimensions" );
 private:
-    Tensor< T, InputShape > input_;
 public:
-    template< typename Container>
-    auto const& operator()( Container const& input )
-    {
-        input_ = Tensor< T, InputShape >{ input };
-        return input_;
-    }
+    // template< typename ElementType, typename TensorShape, TensorType type  >
+    // constexpr InputLayer( nn::Tensor< ElementType, TensorShape, type > const & input ) : input_{ input }
+    // {}
+
+    // template< typename ElementType, typename TensorShape  >
+    // constexpr InputLayer( nn::Tensor< ElementType, TensorShape, TensorType::regular > && input ) : input_{ std::move( input ) }
+    // {
+
+    // }
+
+    // template< typename Container>
+    // auto const& operator()( Container const& input )
+    // {
+    //     input_ = Tensor< T, InputShape >{ input };
+    //     return input_;
+    // }
 };
 
 } // namespace nn
