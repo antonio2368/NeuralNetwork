@@ -1,4 +1,5 @@
 #include "tensor.hpp"
+#include "detail/shapeOperations.hpp"
 
 #include <range/v3/view/zip.hpp>
 #include <range/v3/algorithm/move.hpp>
@@ -183,14 +184,11 @@ constexpr auto dotMultiply
     return result;
 }
 
-template< typename OutputShape, typename ElementType, typename InputShape, TensorType TensorType >
-constexpr
-std::enable_if_t< nn::is_shape_v< OutputShape >, nn::Tensor< ElementType, OutputShape, TensorType::regular > >
-reshape( nn::Tensor< ElementType, InputShape, TensorType > const & inputTensor )
+template< typename OutputShape, typename ElementType, typename InputShape, TensorType TensorType, typename = std::enable_if_t< nn::is_shape_v< OutputShape > > >
+constexpr auto reshape( nn::Tensor< ElementType, InputShape, TensorType > const & inputTensor )
 {
-    static_assert( InputShape::numberOfElements() == OutputShape::numberOfElements(), "Different number of elements in input tensor and expected number of elements in output tensor" );
-
-    return nn::Tensor< ElementType, OutputShape, TensorType::regular >( inputTensor.getAllElementsView() );
+    using CorrectedOutputShape = typename nn::detail::ShapeWithWildcardDeducer< InputShape, OutputShape >::shape;
+    return nn::Tensor< ElementType, CorrectedOutputShape, TensorType::regular >( inputTensor.getAllElementsView() );
 }
 
 } // namespace nn

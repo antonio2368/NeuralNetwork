@@ -41,8 +41,17 @@ TEST( operationsTest, reshape )
 {
     nn::Tensor< int, nn::Shape< 2, 2, 2 > > tensor{ 0, 1, 2, 3, 4, 5, 6, 7 };
 
-    auto const reshaped = nn::reshape< nn::Shape< 8 > >( tensor );
-    ASSERT_EQ( reshaped[ 5 ], tensor[ 1 ][ 0 ][ 1 ] );
+    auto reshaped = nn::reshape< nn::Shape< 4, -1 > >( tensor );
+    ASSERT_EQ( reshaped[ 2 ][ 1 ], tensor[ 1 ][ 0 ][ 1 ] );
+
+    reshaped = nn::reshape< nn::Shape< 4, 2 > >( tensor );
+    ASSERT_EQ( reshaped[ 2 ][ 1 ], tensor[ 1 ][ 0 ][ 1 ] );
+
+    auto reshaped2 = nn::reshape< nn::Shape< -1 > >( tensor );
+    ASSERT_EQ( reshaped2[ 5 ], tensor[ 1 ][ 0 ][ 1 ] );
+
+    auto reshaped3 = nn::reshape< nn::Shape< -1, 4 > >( tensor );
+    ASSERT_EQ( reshaped3[ 1 ][ 1 ], tensor[ 1 ][ 0 ][ 1 ] );
 }
 
 TEST( operationTest, elementwiseOperations )

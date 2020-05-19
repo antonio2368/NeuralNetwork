@@ -8,17 +8,33 @@
 namespace nn
 {
 
-template< TensorSize... SIZES >
+template< TensorSize... sizes >
 class Shape;
 
-template< TensorSize LEAD_SIZE, TensorSize... SUBSIZES >
-class Shape< LEAD_SIZE, SUBSIZES... >
+template< TensorSize leadSize, TensorSize... subSizes >
+class Shape< leadSize, subSizes... >
 {
 private:
-    static constexpr std::size_t numberOfSizes() noexcept { return sizeof...( SUBSIZES ) + 1; }
-    static constexpr std::array< TensorSize, numberOfSizes() > shape_{ { LEAD_SIZE, SUBSIZES... } };
+    static constexpr std::size_t numberOfSizes() noexcept { return sizeof...( subSizes ) + 1; }
+    static constexpr std::array< TensorSize, numberOfSizes() > shape_{ { leadSize, subSizes... } };
 public:
-    using SubShape = Shape< SUBSIZES... >;
+    using SubShape = Shape< subSizes... >;
+
+    Shape()=delete;
+
+    template< typename Validator >
+    static constexpr std::size_t isValid( Validator && validator ) noexcept
+    {
+        for ( auto const & size : shape_ )
+        {
+            if ( !validator( size ) )
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     static constexpr std::size_t numberOfElements() noexcept
     {
@@ -61,7 +77,7 @@ public:
 };
 
 template< typename > struct is_shape : std::false_type {};
-template< TensorSize... SIZES > struct is_shape< nn::Shape< SIZES... > > : std::true_type {};
+template< TensorSize... sizes > struct is_shape< nn::Shape< sizes... > > : std::true_type {};
 
 template< typename T >
 inline constexpr bool is_shape_v = is_shape< T >::value;
