@@ -27,11 +27,6 @@ namespace
     {
         return type == TensorType::view || type == TensorType::constView;
     }
-
-    constexpr bool isValidShapeSize( TensorSize const size ) noexcept
-    {
-        return size > 0;
-    }
 }
 
 template< typename TensorElementType, typename TensorShape, TensorType type = TensorType::regular >
@@ -42,7 +37,7 @@ public:
     using ElementType = std::remove_cv_t< TensorElementType >;
 
     static_assert( nn::is_shape_v< Shape >, "Second argument of tensor should be of class Shape" );
-    static_assert( Shape::isValid( isValidShapeSize ), "All shape sizes should be numbers greater than 0." );
+    static_assert( Shape::isValid(), "All shape sizes should be numbers greater than 0." );
     static_assert( std::is_arithmetic_v< ElementType >, "Tensor can hold only arithmetic types!" );
 private:
     std::conditional_t< isView< type >(), memory::TensorContainerView< ElementType >, memory::TensorContainer< ElementType, Shape::numberOfElements() > > data_;

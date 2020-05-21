@@ -26,29 +26,56 @@ namespace
 
     constexpr TensorSize correctSize( TensorSize const wildcardValue, TensorSize const size ) noexcept
     {
-        return size == -1 ? wildcardValue : size;
+        return size == shapeWildcardSize ? wildcardValue : size;
     }
+
+    template< TensorSize... sizes >
+    constexpr bool sizesHaveWildcard() noexcept
+    {
+        auto const isWildcard = []( auto const size ) noexcept
+        {
+            return size == shapeWildcardSize;
+        };
+
+        return ( isWildcard( sizes ) || ... );
+    }
+
+    template< typename >
+    struct HasWildcard : std::false_type
+    {};
+
+    template< TensorSize... sizes >
+    struct HasWildcard< nn::Shape< sizes... > > : std::conditional_t< sizesHaveWildcard< sizes... >(), std::true_type, std::false_type >
+    {};
+
+    template< std::size_t, typename >
+    struct FillWildcard;
+
+    template< std::size_t expectedNumberOfElements, TensorSize... sizes >
+    struct FillWildcard< expectedNumberOfElements, nn::Shape< sizes... > >
+    {
+        static_assert( expectedNumberOfElements % numberOfElementsWithWildcard< sizes... >() == 0, "Invalid reshape values" );
+        static constexpr TensorSize wildcardValue = expectedNumberOfElements / numberOfElementsWithWildcard< sizes... >();
+        using shape = nn::Shape< correctSize( wildcardValue, sizes )... >;
+    };
 }
 
 namespace detail
 {
 
-template< std::size_t expectedNumberOfElements, typename Shape, TensorSize... sizes >
-struct FillWildcard;
+template< typename T >
+inline constexpr bool hasWildcard = HasWildcard< T >::value;
 
-template< std::size_t expectedNumberOfElements, TensorSize... sizes >
-struct FillWildcard< expectedNumberOfElements, nn::Shape< sizes... > >
+constexpr bool isValidShapeSize( TensorSize const size ) noexcept
 {
-    static_assert( expectedNumberOfElements % numberOfElementsWithWildcard< sizes... >() == 0, "Invalid reshape values" );
-    static constexpr TensorSize wildcardValue = expectedNumberOfElements / numberOfElementsWithWildcard< sizes... >();
-    using shape = nn::Shape< correctSize( wildcardValue, sizes )... >;
-};
+    return size > 0;
+}
 
 template< typename OldShape, typename NewShape >
 struct ShapeWithWildcardDeducer
 {
-    static_assert( nn::is_shape_v< OldShape >, "Only Shape allowed" );
-    static_assert( nn::is_shape_v< NewShape >, "Only Shape allowed" );
+    static_assert( nn::is_shape_v< OldShape > && OldShape::isValid()                 , "Invalid old shape" );
+    static_assert( nn::is_shape_v< NewShape > && NewShape::template isValid< true >(), "Invalid new shape" );
 
     using shape = typename FillWildcard< OldShape::numberOfElements(), NewShape >::shape;
 };

@@ -2,4 +2,4 @@
 
 using TensorSize = int;
 
-constexpr TensorSize Dynamic = -1;
+static constexpr TensorSize shapeWildcardSize = -1;

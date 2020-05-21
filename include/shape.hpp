@@ -17,16 +17,25 @@ class Shape< leadSize, subSizes... >
 private:
     static constexpr std::size_t numberOfSizes() noexcept { return sizeof...( subSizes ) + 1; }
     static constexpr std::array< TensorSize, numberOfSizes() > shape_{ { leadSize, subSizes... } };
-public:
-    using SubShape = Shape< subSizes... >;
 
-    Shape()=delete;
-
-    template< typename Validator >
-    static constexpr std::size_t isValid( Validator && validator ) noexcept
+    template< bool allowWildcard = false, typename Validator >
+    static constexpr bool isValidSize( Validator && validator ) noexcept
     {
+        bool wildcardFound = false;
         for ( auto const & size : shape_ )
         {
+            if constexpr ( allowWildcard )
+            {
+                if ( size == shapeWildcardSize )
+                {
+                    if ( wildcardFound )
+                    {
+                        return false;
+                    }
+                    wildcardFound = true;
+                    continue;
+                }
+            }
             if ( !validator( size ) )
             {
                 return false;
@@ -34,6 +43,23 @@ public:
         }
 
         return true;
+    }
+
+public:
+    using SubShape = Shape< subSizes... >;
+
+    Shape()=delete;
+
+    template< bool allowWildcard = false, typename Validator >
+    static constexpr bool isValid( Validator && validator ) noexcept
+    {
+        return isValidSize< allowWildcard >( std::forward< Validator >( validator ) );
+    }
+
+    template< bool allowWildcard = false >
+    static constexpr bool isValid() noexcept
+    {
+        return isValidSize< allowWildcard >( []( auto const size ) noexcept { return size > 0; } );
     }
 
     static constexpr std::size_t numberOfElements() noexcept

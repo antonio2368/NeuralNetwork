@@ -187,7 +187,13 @@ constexpr auto dotMultiply
 template< typename OutputShape, typename ElementType, typename InputShape, TensorType TensorType, typename = std::enable_if_t< nn::is_shape_v< OutputShape > > >
 constexpr auto reshape( nn::Tensor< ElementType, InputShape, TensorType > const & inputTensor )
 {
-    using CorrectedOutputShape = typename nn::detail::ShapeWithWildcardDeducer< InputShape, OutputShape >::shape;
+    using CorrectedOutputShape =
+        std::conditional_t
+        <
+            nn::detail::hasWildcard< OutputShape >,
+            typename nn::detail::ShapeWithWildcardDeducer< InputShape, OutputShape >::shape,
+            OutputShape
+        >;
     return nn::Tensor< ElementType, CorrectedOutputShape, TensorType::regular >( inputTensor.getAllElementsView() );
 }
 
