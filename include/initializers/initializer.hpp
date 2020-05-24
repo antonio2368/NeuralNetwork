@@ -2,10 +2,7 @@
 
 #include <type_traits>
 
-namespace nn
-{
-
-namespace initializer
+namespace nn::initializer
 {
 
 template< typename T >
@@ -17,6 +14,4 @@ public:
     virtual T getValue() const noexcept = 0;
 };
 
-} // namespace initializer
-
-} // namespace nn
+} // namespace nn::initializer

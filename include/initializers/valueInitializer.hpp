@@ -6,13 +6,18 @@ namespace nn::initializer
 {
 
 template< typename T >
-class ZeroInitializer : public InitializerBase< T >
+class ValueInitializer : public InitializerBase< T >
 {
 public:
+    explicit ValueInitializer( T const value ) : value_{ value }
+    {}
+
     T getValue() const noexcept override
     {
-        return 0;
+        return value_;
     }
+private:
+    T value_;
 };
 
 } // namespace nn::initializer
