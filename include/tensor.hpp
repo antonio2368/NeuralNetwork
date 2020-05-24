@@ -165,7 +165,7 @@ public:
 template< typename > struct is_tensor : std::false_type {};
 template< typename ElementType, typename Shape, TensorType type > struct is_tensor< nn::Tensor< ElementType, Shape, type > > : std::true_type {};
 
-template< typename ElementType >
-inline constexpr bool is_tensor_v = is_tensor< ElementType >::value;
+template< typename Tensor >
+inline constexpr bool is_tensor_v = is_tensor< Tensor >::value;
 
 } // namespace nn

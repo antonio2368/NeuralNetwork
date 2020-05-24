@@ -1,34 +1,37 @@
 #pragma once
 
-#include "layer.hpp"
 #include "tensor.hpp"
-#include "typeTraits.hpp"
 
 namespace nn
 {
 
-template< typename InputShape >
-class InputLayer : public Layer< InputShape, InputShape >
+namespace layer
 {
-    static_assert( InputShape::dimensions() == 3, "Shape of the input can only have 3 dimensions" );
+
+template< typename ElementType, typename InputShape  >
+struct InputLayer
+{
+    using OutputTensorType = Tensor< ElementType, InputShape >;
+
 private:
+    OutputTensorType input_;
+
 public:
-    // template< typename ElementType, typename TensorShape, TensorType type  >
-    // constexpr InputLayer( nn::Tensor< ElementType, TensorShape, type > const & input ) : input_{ input }
-    // {}
+    template< TensorType type >
+    constexpr InputLayer( Tensor< ElementType, InputShape, type > const & input )
+        : input_{ input }
+    {}
 
-    // template< typename ElementType, typename TensorShape  >
-    // constexpr InputLayer( nn::Tensor< ElementType, TensorShape, TensorType::regular > && input ) : input_{ std::move( input ) }
-    // {
+    constexpr InputLayer( OutputTensorType && input )
+        : input_{ std::move( input ) }
+    {}
 
-    // }
-
-    // template< typename Container>
-    // auto const& operator()( Container const& input )
-    // {
-    //     input_ = Tensor< T, InputShape >{ input };
-    //     return input_;
-    // }
+    auto const & operator()() noexcept
+    {
+        return input_;
+    }
 };
 
-} // namespace nn
+}
+
+}

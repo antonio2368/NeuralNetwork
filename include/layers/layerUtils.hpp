@@ -1,0 +1,8 @@
+namespace nn
+{
+
+namespace layer
+{
+}
+
+}

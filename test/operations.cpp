@@ -56,14 +56,34 @@ TEST( operationsTest, reshape )
 
 TEST( operationTest, elementwiseOperations )
 {
-    nn::Tensor< std::int8_t, nn::Shape< 2, 2, 2 > > const tensor{ 0, 1, 2, 3, 4, 5, 6, 7 };
+    nn::Tensor< std::uint32_t, nn::Shape< 2, 2, 2 > > const tensor{ 0, 1, 2, 3, 4, 5, 6, 7 };
 
     auto const added = nn::add( tensor, tensor );
     ASSERT_EQ( added[ 1 ][ 0 ][ 1 ], 10 );
 
-    auto const added2 = nn::add( tensor[ 0 ], tensor[ 1 ] );
+    auto added2 = nn::add( tensor[ 0 ], tensor[ 1 ] );
     ASSERT_EQ( added2[ 0 ][ 1 ], 6 );
     ASSERT_EQ( added2[ 1 ][ 1 ], 10 );
+
+    nn::add< true >( added2, added2 );
+    ASSERT_EQ( added2[ 0 ][ 1 ], 12 );
+    ASSERT_EQ( added2[ 1 ][ 1 ], 20 );
+
+    auto added3 = nn::add( tensor[ 0 ], tensor[ 0 ][ 1 ] );
+    ASSERT_EQ( added3[ 0 ][ 1 ], 4 );
+    ASSERT_EQ( added3[ 1 ][ 1 ], 6 );
+
+    nn::add< true >( added3, tensor[ 0 ][ 1 ] );
+    ASSERT_EQ( added3[ 0 ][ 1 ], 7 );
+    ASSERT_EQ( added3[ 1 ][ 1 ], 9 );
+
+    auto added4 = nn::add( tensor[ 0 ], 3 );
+    ASSERT_EQ( added4[ 0 ][ 1 ], 4 );
+    ASSERT_EQ( added4[ 1 ][ 1 ], 6 );
+
+    nn::add< true >( added4, 3 );
+    ASSERT_EQ( added4[ 0 ][ 1 ], 7 );
+    ASSERT_EQ( added4[ 1 ][ 1 ], 9 );
 
     auto const subtract = nn::subtract( tensor[ 0 ], tensor[ 1 ] );
     ASSERT_EQ( subtract[ 0 ][ 1 ], -4 );

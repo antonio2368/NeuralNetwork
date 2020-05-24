@@ -1,31 +1,32 @@
-#include "layers/layer.hpp"
-#include "layers/inputLayer.hpp"
 #include "layers/denseLayer.hpp"
+#include "layers/inputLayer.hpp"
+#include "layers/layerUtils.hpp"
 
 #include "tensor.hpp"
 
 #include "gtest/gtest.h"
 #include "shape.hpp"
 
-// TEST( layerTest, inputLayer )
-// {
-//     nn::Tensor< float, nn::Shape< 1, 1, 2 > input{ 1.0f, 2.0f };
-//     nn::InputLayer< int, nn::Shape< 1, 1, 2 > > layer;
+#include <range/v3/view/zip.hpp>
 
-//     auto const& layerOutput = layer( vector );
+TEST( layerTest, inputLayer )
+{
+    nn::Tensor< int, nn::Shape< 2, 3 > > const input{ 0, 1, 2, 3, 4, 5 };
+    nn::layer::InputLayer inputLayer{ input };
 
-//     ASSERT_EQ( layerOutput[0][0][0][0], 1 );
-//     ASSERT_EQ( layerOutput[0][0][0][1], 2 );
-// }
+    for ( auto const & [ rawTensorElement, inputLayerTensorElement ] : ranges::views::zip( input.getAllElementsView(), inputLayer().getAllElementsView() ) )
+    {
+        ASSERT_EQ( rawTensorElement, inputLayerTensorElement );
+    }
+}
 
-// TEST( layerTest, denseLayer )
-// {
-//     nn::DenseLayer< int, nn::Shape< 1, 20 >, 30 > layer;
-//     auto const& outputShape = layer.outputShape();
+TEST( layerTest, denseLayer )
+{
+    nn::Tensor< int, nn::Shape< 2, 3 > > input{ 0, 1, 2, 3, 4, 5 };
 
-//     ASSERT_EQ( outputShape[0], 1 );
-//     ASSERT_EQ( outputShape[1], 30 );
+    nn::layer::InputLayer inputLayer{ input };
+    auto const dense = nn::layer::createDenseLayer< 30, false >( inputLayer );
+    auto const denseOutput = dense( inputLayer() );
 
-//     nn::Tensor< int, nn::Shape< 1, 2 > > inputTensor;
-//     inputTensor[0][0] = 2;
-// }
+    ASSERT_EQ( denseOutput[ 0 ][ 25], 0 );
+}

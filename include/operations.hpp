@@ -2,8 +2,10 @@
 #include "detail/shapeOperations.hpp"
 
 #include <range/v3/view/zip.hpp>
+#include <range/v3/view/transform.hpp>
 #include <range/v3/algorithm/move.hpp>
 
+#include <optional>
 #include <algorithm>
 #include <numeric>
 #include <type_traits>
@@ -14,33 +16,185 @@ namespace nn
 namespace detail
 {
 
-template< typename BinaryOp, typename Tensor, typename = std::enable_if_t< nn::is_tensor_v< Tensor > > >
-constexpr auto applyElementwiseOperation( Tensor const & first, Tensor const & second, BinaryOp operation )
-{
-    nn::Tensor< typename Tensor::ElementType, typename Tensor::Shape, TensorType::regular > result;
-    ranges::move( ranges::views::zip_with(operation, first.getAllElementsView(), second.getAllElementsView() ), result.getAllElementsView().data() );
+template< typename T, bool isConst >
+using ConditionalConst = std::conditional_t< isConst, std::remove_cv_t< std::remove_reference_t< T > >, std::remove_cv_t< std::remove_reference_t< T > > const >;
 
-    return result;
+template< bool inPlace = false, typename BinaryOp, typename Tensor, typename = std::enable_if_t< nn::is_tensor_v< Tensor > > >
+constexpr auto applyElementwiseOperation
+(
+    ConditionalConst< Tensor, inPlace > & first,
+    Tensor const & second,
+    BinaryOp && operation
+)
+{
+    auto const applyElementwise = [ & ]( auto const & firstTensor, auto const & secondTensor, auto & resultTensor )
+    {
+        ranges::move( ranges::views::zip_with( operation, firstTensor.getAllElementsView(), secondTensor.getAllElementsView() ), resultTensor.getAllElementsView().data() );
+    };
+
+    if constexpr ( inPlace )
+    {
+        applyElementwise( first, second, first );
+    }
+    else
+    {
+        nn::Tensor< typename Tensor::ElementType, typename Tensor::Shape, TensorType::regular > result;
+        applyElementwise( first, second, result );
+        return result;
+    }
 }
+
+// broadcast
+template
+<
+    bool inPlace = false,
+    typename Tensor1,
+    typename Tensor2,
+    typename BinaryOp,
+    typename = std::enable_if_t< nn::is_tensor_v< Tensor2 > >
+>
+constexpr auto applyElementwiseOperation
+(
+    Tensor1 & first,
+    Tensor2 const & second,
+    BinaryOp && operation
+)
+{
+    static_assert( nn::is_tensor_v< std::remove_cv_t< Tensor1 > > && nn::is_tensor_v< Tensor2 > );
+    static_assert( Tensor1::Shape::dimensions() == 2 && Tensor2::Shape::dimensions() == 1 );
+    static_assert( Tensor1::Shape::size( 1 ) == Tensor2::Shape::size( 0 ) );
+
+    constexpr TensorSize rowNumber = Tensor1::Shape::size( 0 );
+    constexpr TensorSize columnNumber = Tensor1::Shape::size( 1 );
+    auto const applyWithRowBroadcast = [ & ]( auto const & firstTensor, auto const & secondTensor, auto & resultTensor )
+    {
+        std::size_t offset = 0;
+        for ( TensorSize i{ 0 }; i < rowNumber; ++i )
+        {
+            ranges::move
+            (
+                ranges::views::zip_with
+                (
+                    operation,
+                    firstTensor.getAllElementsView().subspan( offset, columnNumber ),
+                    secondTensor.getAllElementsView()
+                ),
+                resultTensor.getAllElementsView().subspan( offset, columnNumber ).data()
+            );
+            offset += columnNumber;
+        }
+    };
+
+    if constexpr ( inPlace )
+    {
+        applyWithRowBroadcast( first, second, first );
+    }
+    else
+    {
+        using ElementType = typename Tensor1::ElementType;
+        nn::Tensor< ElementType, nn::Shape< rowNumber, columnNumber > > result;
+        applyWithRowBroadcast( first, second, result );
+        return result;
+    }
+}
+
+template
+<
+    bool inPlace = false,
+    typename Tensor,
+    typename T,
+    typename BinaryOp,
+    typename = std::enable_if_t< std::is_convertible_v< T, typename Tensor::ElementType > >
+>
+constexpr auto applyElementwiseOperation( Tensor & tensor, T const scalar, BinaryOp && operation )
+{
+    auto const applyOperationWithScalar = [ & ]( auto const & tensor, auto & result )
+    {
+        ranges::move
+        (
+            tensor.getAllElementsView() | ranges::views::transform
+            (
+                [ & ]( auto const element)
+                {
+                    return operation( element, scalar );
+                }
+            ),
+            result.getAllElementsView().data()
+        );
+    };
+
+    if constexpr ( inPlace )
+    {
+        applyOperationWithScalar( tensor, tensor );
+    }
+    else
+    {
+        nn::Tensor< typename Tensor::ElementType, typename Tensor::Shape > result;
+        applyOperationWithScalar( tensor, result );
+        return result;
+    }
+}
+
+template< typename FirstOperand, typename SecondOperand >
+struct validElementWiseOperandsHelper : std::false_type{};
+
+template< typename ElementType, typename Shape1, TensorType type1, typename Shape2, TensorType type2 >
+struct validElementWiseOperandsHelper< nn::Tensor< ElementType, Shape1, type1 >, nn::Tensor< ElementType, Shape2, type2 > > : std::true_type{};
+
+template< typename ElementType, typename Shape, TensorType type, typename T >
+struct validElementWiseOperandsHelper< nn::Tensor< ElementType, Shape, type >, T > : std::true_type
+{
+    static_assert( std::is_convertible_v< T, ElementType > );
+};
+
+template< typename FirstOperand, typename SecondOperand >
+inline constexpr bool validElementWiseOperands = validElementWiseOperandsHelper< FirstOperand, SecondOperand >::value;
 
 } // namespace detail
 
-template< typename Tensor, typename = std::enable_if_t< nn::is_tensor_v< Tensor > > >
-constexpr auto add( Tensor const & first, Tensor const & second )
+template< bool inPlace = false, typename Tensor1, typename Tensor2, typename = std::enable_if_t< !inPlace > >
+constexpr auto add( Tensor1 const & first, Tensor2 const & second )
 {
-    return detail::applyElementwiseOperation( first, second, std::plus< typename Tensor::ElementType >{} );
+    static_assert( detail::validElementWiseOperands< Tensor1, Tensor2 > );
+    return detail::applyElementwiseOperation< false >( first, second, std::plus< typename Tensor1::ElementType >{} );
 }
 
-template< typename Tensor, typename = std::enable_if_t< nn::is_tensor_v< Tensor > > >
-constexpr auto subtract( Tensor const & first, Tensor const & second )
+template< bool inPlace = false, typename Tensor1, typename Tensor2, typename = std::enable_if_t< inPlace > >
+constexpr auto add( Tensor1 & first, Tensor2 const & second )
 {
-    return detail::applyElementwiseOperation( first, second, std::minus< typename Tensor::ElementType >{} );
+    static_assert( !std::is_const_v< Tensor1 > );
+    static_assert( detail::validElementWiseOperands< Tensor1, Tensor2 > );
+    detail::applyElementwiseOperation< true >( first, second, std::plus< typename Tensor1::ElementType >{} );
 }
 
-template< typename Tensor, typename = std::enable_if_t< nn::is_tensor_v< Tensor > > >
-constexpr auto multiply( Tensor const & first, Tensor const & second )
+template< bool inPlace = false, typename Tensor1, typename Tensor2, typename = std::enable_if_t< !inPlace > >
+constexpr auto subtract( Tensor1 const & first, Tensor2 const & second )
 {
-    return detail::applyElementwiseOperation( first, second, std::multiplies< typename Tensor::ElementType >{} );
+    static_assert( detail::validElementWiseOperands< Tensor1, Tensor2 > );
+    return detail::applyElementwiseOperation< false >( first, second, std::minus< typename Tensor1::ElementType >{} );
+}
+
+template< bool inPlace = false, typename Tensor1, typename Tensor2, typename = std::enable_if_t< inPlace > >
+constexpr auto subtract( Tensor1 & first, Tensor2 const & second )
+{
+    static_assert( !std::is_const_v< Tensor1 > );
+    static_assert( detail::validElementWiseOperands< Tensor1, Tensor2 > );
+    detail::applyElementwiseOperation< true >( first, second, std::minus< typename Tensor1::ElementType >{} );
+}
+
+template< bool inPlace = false, typename Tensor1, typename Tensor2, typename = std::enable_if_t< !inPlace > >
+constexpr auto multiply( Tensor1 const & first, Tensor2 const & second )
+{
+    static_assert( detail::validElementWiseOperands< Tensor1, Tensor2 > );
+    return detail::applyElementwiseOperation< false >( first, second, std::multiplies< typename Tensor1::ElementType >{} );
+}
+
+template< bool inPlace = false, typename Tensor1, typename Tensor2, typename = std::enable_if_t< inPlace > >
+constexpr auto multiply( Tensor1 & first, Tensor2 const & second )
+{
+    static_assert( !std::is_const_v< Tensor1 > );
+    static_assert( detail::validElementWiseOperands< Tensor1, Tensor2 > );
+    detail::applyElementwiseOperation< true >( first, second, std::multiplies< typename Tensor1::ElementType >{} );
 }
 
 template
