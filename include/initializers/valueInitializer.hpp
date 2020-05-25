@@ -6,18 +6,21 @@ namespace nn::initializer
 {
 
 template< typename T >
-class ValueInitializer : public InitializerBase< T >
+class ValueInitializer
 {
 public:
-    explicit ValueInitializer( T const value ) : value_{ value }
+    constexpr explicit ValueInitializer( T const value ) : value_{ value }
     {}
 
-    T getValue() const noexcept override
+    constexpr T getValue() const noexcept
     {
         return value_;
     }
 private:
     T value_;
 };
+
+template< typename T >
+struct is_initializer< ValueInitializer< T > > : std::true_type{};
 
 } // namespace nn::initializer

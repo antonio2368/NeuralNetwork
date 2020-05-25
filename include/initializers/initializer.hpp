@@ -6,12 +6,12 @@ namespace nn::initializer
 {
 
 template< typename T >
-class InitializerBase
-{
-    static_assert( std::is_arithmetic_v< T >, "Initializer only works for arithemtic types" );
+struct is_initializer : std::false_type{};
 
-public:
-    virtual T getValue() const noexcept = 0;
-};
+template< typename T >
+inline constexpr bool is_initializer_t = is_initializer< T >::value;
+
+template< typename T >
+using enableIfInitializer = std::enable_if_t< is_initializer_t< T > >;
 
 } // namespace nn::initializer

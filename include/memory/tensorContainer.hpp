@@ -138,7 +138,12 @@ private:
     }
 
 public:
-    constexpr TensorContainer( nn::initializer::InitializerBase< T > const& initializer = nn::initializer::ZeroInitializer< T >{} )
+    template< template< typename > class Initializer >
+    constexpr TensorContainer
+    (
+        Initializer< T > const & initializer = nn::initializer::ZeroInitializer< T >{},
+        nn::initializer::enableIfInitializer< Initializer< T > > * = 0
+    )
     {
         std::transform( std::begin( data_ ), std::end( data_ ), std::begin( data_ ), [ &initializer ]( auto const & ){ return initializer.getValue(); } );
     }

@@ -34,7 +34,7 @@ class Tensor
 {
 public:
     using Shape       = TensorShape;
-    using ElementType = std::remove_cv_t< TensorElementType >;
+    using ElementType = std::decay_t< TensorElementType >;
 
     static_assert( nn::is_shape_v< Shape >, "Second argument of tensor should be of class Shape" );
     static_assert( Shape::isValid(), "All shape sizes should be numbers greater than 0." );
@@ -47,8 +47,12 @@ private:
     {}
 
 public:
-    template< TensorType TT = type >
-    constexpr Tensor( nn::initializer::InitializerBase< ElementType > const & initializer = nn::initializer::ZeroInitializer< ElementType >{}, std::enable_if_t< !isView< TT >() > * = 0 )
+    template< TensorType TT = type, template< typename = ElementType > class Initializer = nn::initializer::ZeroInitializer >
+    constexpr Tensor
+    (
+        Initializer< ElementType > const & initializer = nn::initializer::ZeroInitializer< ElementType >{},
+        std::enable_if_t< !isView< TT >() && nn::initializer::is_initializer_t< Initializer< ElementType > > > * = 0
+    )
         : data_{ initializer }
     {}
 
@@ -67,9 +71,8 @@ public:
         : data_{ other.data_ }
     {}
 
-    template< TensorType TT = type, TensorType otherTensorType >
-    constexpr
-    std::enable_if_t< !isView< TT >(), Tensor< ElementType, Shape, TensorType::regular > > operator=( Tensor< ElementType, Shape, otherTensorType > const & other ) noexcept
+    template< TensorType TT = type, TensorType otherTensorType, typename = std::enable_if_t< !isView< TT > > >
+    constexpr auto operator=( Tensor< ElementType, Shape, otherTensorType > const & other ) noexcept
     {
         if ( &other != this )
         {
@@ -84,9 +87,8 @@ public:
         : data_{ std::move( other.data_ ) }
     {}
 
-    template< TensorType TT = type >
-    constexpr
-    std::enable_if_t< !isView< TT >(), Tensor< ElementType, Shape, TensorType::regular > > operator=( Tensor< ElementType, Shape, TensorType::regular > && other ) noexcept
+    template< TensorType TT = type, typename = std::enable_if_t< !isView< TT > > >
+    constexpr auto operator=( Tensor< ElementType, Shape, TensorType::regular > && other ) noexcept
     {
         if ( &other != this )
         {

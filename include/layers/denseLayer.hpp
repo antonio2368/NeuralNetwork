@@ -19,7 +19,8 @@ namespace detail
 template< bool hasBias, typename ElementType, std::size_t outputNumber >
 struct DenseLayerBias
 {
-    constexpr DenseLayerBias( nn::initializer::InitializerBase< ElementType > const & )
+    template< template< typename > class Initializer >
+    constexpr DenseLayerBias( Initializer< ElementType > const &, nn::initializer::enableIfInitializer< Initializer< ElementType > > * = 0 )
     {}
 };
 
@@ -27,7 +28,12 @@ template< typename ElementType, std::size_t outputNumber >
 struct DenseLayerBias< true, ElementType, outputNumber >
 {
 protected:
-    constexpr DenseLayerBias( nn::initializer::InitializerBase< ElementType > const & biasInitializer = nn::initializer::ZeroInitializer< ElementType >{} )
+    template< template< typename > class Initializer >
+    constexpr DenseLayerBias
+    (
+        Initializer< ElementType > const & biasInitializer = nn::initializer::ZeroInitializer< ElementType >{},
+        nn::initializer::enableIfInitializer< Initializer< ElementType > > * = 0
+    )
     : bias_{ biasInitializer }
     {}
 
@@ -58,12 +64,17 @@ public:
     using OutputTensorType  = Tensor< ElementType, OutputShape >;
 
     static_assert( InputShape::dimensions() == 2, "Dense layer inputs can only have 2 dimension" );
-    static_assert( is_tensor_v< std::remove_cv_t< std::remove_reference_t< InputTensor > > > );
+    static_assert( is_tensor_v< std::decay_t< InputTensor > > );
 
+    template
+    <
+        template< typename = ElementType > class WeightInitializer = nn::initializer::ZeroInitializer,
+        template< typename = ElementType > class BiasInitializer   = nn::initializer::ZeroInitializer
+    >
     constexpr DenseLayer
     (
-        nn::initializer::InitializerBase< ElementType > const & weightInitializer = nn::initializer::ZeroInitializer< ElementType >{},
-        nn::initializer::InitializerBase< ElementType > const & biasInitializer = nn::initializer::ZeroInitializer< ElementType >{}
+        WeightInitializer< ElementType > const & weightInitializer = nn::initializer::ZeroInitializer< ElementType >{},
+        BiasInitializer< ElementType > const & biasInitializer = nn::initializer::ZeroInitializer< ElementType >{}
     )
         : BaseBias{ biasInitializer },
           weights_{ weightInitializer }

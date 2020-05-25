@@ -17,9 +17,12 @@ namespace detail
 {
 
 template< typename T, bool isConst >
-using ConditionalConst = std::conditional_t< isConst, std::remove_cv_t< std::remove_reference_t< T > >, std::remove_cv_t< std::remove_reference_t< T > > const >;
+using ConditionalConst = std::conditional_t< isConst, std::decay_t< T >, std::decay_t< T > const >;
 
-template< bool inPlace = false, typename BinaryOp, typename Tensor, typename = std::enable_if_t< nn::is_tensor_v< Tensor > > >
+template< typename T >
+using enableIfTensor = std::enable_if_t< nn::is_tensor_v< std::decay_t< T > > >;
+
+template< bool inPlace = false, typename BinaryOp, typename Tensor, typename = enableIfTensor< Tensor > >
 constexpr auto applyElementwiseOperation
 (
     ConditionalConst< Tensor, inPlace > & first,
@@ -51,7 +54,7 @@ template
     typename Tensor1,
     typename Tensor2,
     typename BinaryOp,
-    typename = std::enable_if_t< nn::is_tensor_v< Tensor2 > >
+    typename = enableIfTensor< Tensor2 >
 >
 constexpr auto applyElementwiseOperation
 (
@@ -60,7 +63,7 @@ constexpr auto applyElementwiseOperation
     BinaryOp && operation
 )
 {
-    static_assert( nn::is_tensor_v< std::remove_cv_t< Tensor1 > > && nn::is_tensor_v< Tensor2 > );
+    static_assert( nn::is_tensor_v< std::decay_t< Tensor1 > > );
     static_assert( Tensor1::Shape::dimensions() == 2 && Tensor2::Shape::dimensions() == 1 );
     static_assert( Tensor1::Shape::size( 1 ) == Tensor2::Shape::size( 0 ) );
 
