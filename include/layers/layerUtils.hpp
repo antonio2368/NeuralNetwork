@@ -1,8 +1,4 @@
-namespace nn
+namespace nn::layer
 {
-
-namespace layer
-{
-}
 
 }

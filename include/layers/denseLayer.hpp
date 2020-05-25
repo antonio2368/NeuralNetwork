@@ -7,10 +7,7 @@
 #include "initializers/initializer.hpp"
 #include "initializers/zeroInitializer.hpp"
 
-namespace nn
-{
-
-namespace layer
+namespace nn::layer
 {
 
 namespace detail
@@ -20,7 +17,7 @@ template< bool hasBias, typename ElementType, std::size_t outputNumber >
 struct DenseLayerBias
 {
     template< template< typename > class Initializer >
-    constexpr DenseLayerBias( Initializer< ElementType > const &, nn::initializer::enableIfInitializer< Initializer< ElementType > > * = 0 )
+    constexpr DenseLayerBias( Initializer< ElementType > const &, initializer::enableIfInitializer< Initializer< ElementType > > * = 0 )
     {}
 };
 
@@ -31,7 +28,7 @@ protected:
     template< template< typename > class Initializer >
     constexpr DenseLayerBias
     (
-        Initializer< ElementType > const & biasInitializer = nn::initializer::ZeroInitializer< ElementType >{},
+        Initializer< ElementType > const & biasInitializer = initializer::ZeroInitializer< ElementType >{},
         nn::initializer::enableIfInitializer< Initializer< ElementType > > * = 0
     )
     : bias_{ biasInitializer }
@@ -68,13 +65,13 @@ public:
 
     template
     <
-        template< typename = ElementType > class WeightInitializer = nn::initializer::ZeroInitializer,
-        template< typename = ElementType > class BiasInitializer   = nn::initializer::ZeroInitializer
+        template< typename = ElementType > class WeightInitializer = initializer::ZeroInitializer,
+        template< typename = ElementType > class BiasInitializer   = initializer::ZeroInitializer
     >
     constexpr DenseLayer
     (
-        WeightInitializer< ElementType > const & weightInitializer = nn::initializer::ZeroInitializer< ElementType >{},
-        BiasInitializer< ElementType > const & biasInitializer = nn::initializer::ZeroInitializer< ElementType >{}
+        WeightInitializer< ElementType > const & weightInitializer = initializer::ZeroInitializer< ElementType >{},
+        BiasInitializer< ElementType > const & biasInitializer = initializer::ZeroInitializer< ElementType >{}
     )
         : BaseBias{ biasInitializer },
           weights_{ weightInitializer }
@@ -98,6 +95,4 @@ constexpr auto createDenseLayer( InputLayer const &, Args&&... args )
     return DenseLayer< InputLayer, outputNumber, hasBias >{ std::forward< Args >( args )... };
 }
 
-}
-
-} // namespace nn
+} // namespace nn::layer

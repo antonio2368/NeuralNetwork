@@ -80,6 +80,6 @@ struct ShapeWithWildcardDeducer
     using shape = typename FillWildcard< OldShape::numberOfElements(), NewShape >::shape;
 };
 
-}
+} // namespace detail
 
-}
+} // namespace nn

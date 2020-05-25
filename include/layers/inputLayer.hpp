@@ -2,10 +2,7 @@
 
 #include "tensor.hpp"
 
-namespace nn
-{
-
-namespace layer
+namespace nn::layer
 {
 
 template< typename ElementType, typename InputShape  >
@@ -32,6 +29,4 @@ public:
     }
 };
 
-}
-
-}
+} // namespace nn::layer

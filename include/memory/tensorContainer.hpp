@@ -12,10 +12,7 @@
 #include <cassert>
 #include <algorithm>
 
-namespace nn
-{
-
-namespace memory
+namespace nn::memory
 {
 
 template< typename T >
@@ -230,6 +227,4 @@ public:
     }
 };
 
-} // namespace memory
-
-} // namespace nn
+} // namespace nn::memory

@@ -3,7 +3,6 @@
 #include "memory/tensorContainer.hpp"
 #include "initializers/initializer.hpp"
 #include "initializers/zeroInitializer.hpp"
-#include "typeTraits.hpp"
 #include "shape.hpp"
 
 #include "range/v3/view/span.hpp"
@@ -47,11 +46,11 @@ private:
     {}
 
 public:
-    template< TensorType TT = type, template< typename = ElementType > class Initializer = nn::initializer::ZeroInitializer >
+    template< TensorType TT = type, template< typename = ElementType > class Initializer = initializer::ZeroInitializer >
     constexpr Tensor
     (
-        Initializer< ElementType > const & initializer = nn::initializer::ZeroInitializer< ElementType >{},
-        std::enable_if_t< !isView< TT >() && nn::initializer::is_initializer_t< Initializer< ElementType > > > * = 0
+        Initializer< ElementType > const & initializer = initializer::ZeroInitializer< ElementType >{},
+        std::enable_if_t< !isView< TT >() && initializer::is_initializer_t< Initializer< ElementType > > > * = 0
     )
         : data_{ initializer }
     {}
