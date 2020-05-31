@@ -38,3 +38,8 @@ build/
 *.exe
 *.out
 *.app
+
+.clang*
+compile_commands.json
+models/
+datasets/
