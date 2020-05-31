@@ -1,9 +1,11 @@
 #pragma once
 
+#include <cstdint>
+
 namespace nn
 {
 
-using TensorSize = int;
+using TensorSize = std::int64_t;
 
 static constexpr TensorSize shapeWildcardSize = -1;
 

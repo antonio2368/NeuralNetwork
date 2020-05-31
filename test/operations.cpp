@@ -1,8 +1,7 @@
-#include "operations.hpp"
-#include "tensor.hpp"
-#include "utils/tensorUtils.hpp"
+#include <operations.hpp>
+#include <tensor.hpp>
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include <vector>
 

@@ -100,3 +100,8 @@ TEST( tensorTest, copyTensor )
     auto const movedTensor2{ nn::Tensor< int, nn::Shape< 2, 3 > >{ 1, 2, 3, 4, 5, 6 } };
     ASSERT_EQ( movedTensor2[ 0 ][ 1 ], 2 );
 }
+
+TEST( tensorTest, largeTensor )
+{
+    nn::Tensor< int, nn::Shape< 2000, 2000, 200 > > largeTensor;
+}

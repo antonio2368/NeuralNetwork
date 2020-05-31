@@ -62,12 +62,28 @@ public:
         return isValidSize< allowWildcard >( []( auto const size ) noexcept { return size > 0; } );
     }
 
+    static constexpr bool hasWildcard() noexcept
+    {
+        for ( auto const size : shape_ )
+        {
+            if ( size == shapeWildcardSize )
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     static constexpr std::size_t numberOfElements() noexcept
     {
-        TensorSize numberOfElements{ 1 };
+        std::size_t numberOfElements{ 1 };
         for ( auto const & size : shape_ )
         {
-            numberOfElements *= size;
+            if ( size > 0 )
+            {
+                numberOfElements *= size;
+            }
         }
         return numberOfElements;
     }

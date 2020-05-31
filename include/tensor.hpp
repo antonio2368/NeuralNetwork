@@ -3,9 +3,9 @@
 #include "memory/tensorContainer.hpp"
 #include "initializers/initializer.hpp"
 #include "initializers/zeroInitializer.hpp"
-#include "shape.hpp"
+#include "detail/shapeOperations.hpp"
 
-#include "range/v3/view/span.hpp"
+#include <range/v3/view/span.hpp>
 
 #include <type_traits>
 
@@ -42,36 +42,36 @@ private:
     std::conditional_t< isView< type >(), memory::TensorContainerView< ElementType >, memory::TensorContainer< ElementType, Shape::numberOfElements() > > data_;
 
     template< TensorType TT = type >
-    constexpr Tensor( memory::TensorContainerView< ElementType > && containerView, std::enable_if_t< isView< TT >() > * = 0 ) : data_{ std::move( containerView ) }
+    constexpr Tensor( memory::TensorContainerView< ElementType > && containerView, std::enable_if_t< isView< TT >() > * = nullptr ) : data_{ std::move( containerView ) }
     {}
 
 public:
     template< TensorType TT = type, template< typename = ElementType > class Initializer = initializer::ZeroInitializer >
-    constexpr Tensor
+    explicit constexpr Tensor
     (
         Initializer< ElementType > const & initializer = initializer::ZeroInitializer< ElementType >{},
-        std::enable_if_t< !isView< TT >() && initializer::is_initializer_t< Initializer< ElementType > > > * = 0
+        std::enable_if_t< !isView< TT >() && initializer::is_initializer_v< Initializer< ElementType > > > * = nullptr
     )
         : data_{ initializer }
     {}
 
     template< TensorType TT = type >
-    constexpr Tensor( ranges::span< ElementType const > const span, std::enable_if_t< !isView< TT >() > * = 0 )
+    explicit constexpr Tensor( ranges::span< ElementType const > const span, std::enable_if_t< !isView< TT >() > * = nullptr )
         : data_{ span }
     {}
 
     template< TensorType TT = type >
-    constexpr Tensor( std::initializer_list< ElementType > const initList, std::enable_if_t< !isView< TT >() > * = 0 )
+    constexpr Tensor( std::initializer_list< ElementType > const initList, std::enable_if_t< !isView< TT >() > * = nullptr )
         : data_{ initList }
     {}
 
     template< TensorType TT = type, TensorType otherTensorType >
-    constexpr Tensor( Tensor< ElementType, Shape, otherTensorType > const & other, std::enable_if_t< !isView< TT >() > * = 0 )
+    explicit constexpr Tensor( Tensor< ElementType, Shape, otherTensorType > const & other, std::enable_if_t< !isView< TT >() > * = nullptr )
         : data_{ other.data_ }
     {}
 
     template< TensorType TT = type, TensorType otherTensorType, typename = std::enable_if_t< !isView< TT > > >
-    constexpr auto operator=( Tensor< ElementType, Shape, otherTensorType > const & other ) noexcept
+    constexpr auto & operator=( Tensor< ElementType, Shape, otherTensorType > const & other ) noexcept
     {
         if ( &other != this )
         {
@@ -82,12 +82,12 @@ public:
     }
 
     template< TensorType TT = type  >
-    constexpr Tensor( Tensor< ElementType, Shape, TensorType::regular > && other, std::enable_if_t< !isView< TT >() > * = 0  )
+    constexpr Tensor( Tensor< ElementType, Shape, TensorType::regular > && other, std::enable_if_t< !isView< TT >() > * = nullptr  )
         : data_{ std::move( other.data_ ) }
     {}
 
     template< TensorType TT = type, typename = std::enable_if_t< !isView< TT > > >
-    constexpr auto operator=( Tensor< ElementType, Shape, TensorType::regular > && other ) noexcept
+    constexpr auto & operator=( Tensor< ElementType, Shape, TensorType::regular > && other ) noexcept
     {
         if ( &other != this )
         {
@@ -96,6 +96,7 @@ public:
         return *this;
     }
 
+    [[ nodiscard ]]
     constexpr std::size_t size() const noexcept
     {
         return Shape::size( 0 );

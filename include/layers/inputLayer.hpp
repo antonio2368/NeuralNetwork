@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tensor.hpp"
+#include "../tensor.hpp"
 
 namespace nn::layer
 {
@@ -15,11 +15,11 @@ private:
 
 public:
     template< TensorType type >
-    constexpr InputLayer( Tensor< ElementType, InputShape, type > const & input )
+    explicit constexpr InputLayer( Tensor< ElementType, InputShape, type > const & input )
         : input_{ input }
     {}
 
-    constexpr InputLayer( OutputTensorType && input )
+    explicit constexpr InputLayer( OutputTensorType && input )
         : input_{ std::move( input ) }
     {}
 

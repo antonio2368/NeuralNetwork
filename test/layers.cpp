@@ -1,13 +1,14 @@
-#include "layers/denseLayer.hpp"
-#include "layers/inputLayer.hpp"
-#include "layers/layerUtils.hpp"
+#include <layers/denseLayer.hpp>
+#include <layers/inputLayer.hpp>
+#include <layers/layerUtils.hpp>
 
-#include "initializers/valueInitializer.hpp"
+#include <initializers/valueInitializer.hpp>
 
-#include "tensor.hpp"
+#include <tensor.hpp>
 
-#include "gtest/gtest.h"
-#include "shape.hpp"
+#include <shape.hpp>
+
+#include <gtest/gtest.h>
 
 #include <range/v3/view/zip.hpp>
 

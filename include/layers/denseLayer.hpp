@@ -1,11 +1,11 @@
 #pragma once
 
-#include "tensor.hpp"
+#include "../tensor.hpp"
 
-#include "operations.hpp"
+#include "../operations.hpp"
 
-#include "initializers/initializer.hpp"
-#include "initializers/zeroInitializer.hpp"
+#include "../initializers/initializer.hpp"
+#include "../initializers/zeroInitializer.hpp"
 
 namespace nn::layer
 {
@@ -17,7 +17,7 @@ template< bool hasBias, typename ElementType, std::size_t outputNumber >
 struct DenseLayerBias
 {
     template< template< typename > class Initializer >
-    constexpr DenseLayerBias( Initializer< ElementType > const &, initializer::enableIfInitializer< Initializer< ElementType > > * = 0 )
+    explicit constexpr DenseLayerBias( Initializer< ElementType > const &, initializer::enableIfInitializer< Initializer< ElementType > > * = nullptr )
     {}
 };
 
@@ -26,10 +26,10 @@ struct DenseLayerBias< true, ElementType, outputNumber >
 {
 protected:
     template< template< typename > class Initializer >
-    constexpr DenseLayerBias
+    explicit constexpr DenseLayerBias
     (
         Initializer< ElementType > const & biasInitializer = initializer::ZeroInitializer< ElementType >{},
-        nn::initializer::enableIfInitializer< Initializer< ElementType > > * = 0
+        nn::initializer::enableIfInitializer< Initializer< ElementType > > * = nullptr
     )
     : bias_{ biasInitializer }
     {}
@@ -68,7 +68,7 @@ public:
         template< typename = ElementType > class WeightInitializer = initializer::ZeroInitializer,
         template< typename = ElementType > class BiasInitializer   = initializer::ZeroInitializer
     >
-    constexpr DenseLayer
+    explicit constexpr DenseLayer
     (
         WeightInitializer< ElementType > const & weightInitializer = initializer::ZeroInitializer< ElementType >{},
         BiasInitializer< ElementType > const & biasInitializer = initializer::ZeroInitializer< ElementType >{}

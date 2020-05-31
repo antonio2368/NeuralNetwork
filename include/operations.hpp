@@ -1,3 +1,5 @@
+#pragma once
+
 #include "tensor.hpp"
 #include "detail/shapeOperations.hpp"
 
@@ -344,10 +346,11 @@ constexpr auto dotMultiply
 template< typename OutputShape, typename ElementType, typename InputShape, TensorType TensorType, typename = std::enable_if_t< nn::is_shape_v< OutputShape > > >
 constexpr auto reshape( nn::Tensor< ElementType, InputShape, TensorType > const & inputTensor )
 {
+    static_assert( nn::is_shape_v< OutputShape > );
     using CorrectedOutputShape =
         std::conditional_t
         <
-            nn::detail::hasWildcard< OutputShape >,
+            OutputShape::hasWildcard(),
             typename nn::detail::ShapeWithWildcardDeducer< InputShape, OutputShape >::shape,
             OutputShape
         >;

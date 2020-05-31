@@ -1,8 +1,8 @@
 #pragma once
 
-#include "constants.hpp"
-#include "initializers/initializer.hpp"
-#include "initializers/zeroInitializer.hpp"
+#include "../constants.hpp"
+#include "../initializers/initializer.hpp"
+#include "../initializers/zeroInitializer.hpp"
 
 #include <range/v3/view/span.hpp>
 #include <range/v3/view/enumerate.hpp>
@@ -22,7 +22,7 @@ private:
     ranges::span< T > data_;
 
 public:
-    constexpr TensorContainerView( ranges::span< T > data ) : data_{ data } {}
+    explicit constexpr TensorContainerView( ranges::span< T > data ) : data_{ data } {}
 
     constexpr auto getView( std::size_t const start, std::size_t const count = 1 ) const noexcept
     {
@@ -48,10 +48,7 @@ public:
     friend class TensorContainer;
 };
 
-namespace
-{
-    static constexpr TensorSize limit = 10000;
-}
+constexpr TensorSize limit = 10000;
 
 template< typename T, TensorSize size = 0 >
 class DynamicElement
@@ -61,11 +58,9 @@ private:
 
     void copyElements( std::unique_ptr< T[] > const & source, std::unique_ptr< T[] > & destination ) noexcept
     {
-        for ( std::size_t i = 0; i < size; ++i )
-        {
-            destination[ i ] = source[ i ];
-        }
+        std::memcpy( destination, source, size * sizeof( T ) );
     }
+
 public:
     constexpr operator T*() const noexcept
     {
@@ -90,7 +85,7 @@ public:
         return *this;
     }
 
-    constexpr DynamicElement( DynamicElement< T, size > && other ) : data_{ std::move( other.data_ ) }
+    constexpr DynamicElement( DynamicElement< T, size > && other ) noexcept : data_{ std::move( other.data_ ) }
     {}
 
     constexpr DynamicElement< T, size >& operator=( DynamicElement< T, size > && other ) noexcept
@@ -136,16 +131,16 @@ private:
 
 public:
     template< template< typename > class Initializer >
-    constexpr TensorContainer
+    explicit constexpr TensorContainer
     (
         Initializer< T > const & initializer = nn::initializer::ZeroInitializer< T >{},
-        nn::initializer::enableIfInitializer< Initializer< T > > * = 0
+        initializer::enableIfInitializer< Initializer< T > > * = nullptr
     )
     {
         std::transform( std::begin( data_ ), std::end( data_ ), std::begin( data_ ), [ &initializer ]( auto const & ){ return initializer.getValue(); } );
     }
 
-    constexpr TensorContainer( ranges::span< T const > const container ) noexcept
+    explicit constexpr TensorContainer( ranges::span< T const > const container ) noexcept
     {
         assignData( container );
     }
@@ -155,7 +150,7 @@ public:
         assignData( initList );
     }
 
-    constexpr TensorContainer( TensorContainerView< T > const & other )
+    explicit constexpr TensorContainer( TensorContainerView< T > const & other )
     {
         assert( other.data_.size() == size );
 
@@ -177,7 +172,7 @@ public:
             }
         }
 
-        return this;
+        return *this;
     }
 
     constexpr TensorContainer( TensorContainer< T, size > const & other ) : data_{ other.data_ }
@@ -193,7 +188,7 @@ public:
         return *this;
     }
 
-    constexpr TensorContainer( TensorContainer< T, size > && other ) : data_{ std::move( other.data_ ) }
+    explicit constexpr TensorContainer( TensorContainer< T, size > && other ) : data_{ std::move( other.data_ ) }
     {}
 
     constexpr TensorContainer< T, size >& operator=( TensorContainer< T, size > && other ) noexcept

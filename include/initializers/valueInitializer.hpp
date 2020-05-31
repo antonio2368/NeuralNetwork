@@ -1,7 +1,6 @@
 #pragma once
 
 #include "initializer.hpp"
-
 namespace nn::initializer
 {
 
