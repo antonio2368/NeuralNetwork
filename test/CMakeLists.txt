@@ -33,5 +33,6 @@ add_gtest(${PROJECT_TEST_DIR}/layers.cpp)
 add_gtest(${PROJECT_TEST_DIR}/operations.cpp)
 # add_gtest(${PROJECT_TEST_DIR}/utils.cpp)
 add_gtest(${PROJECT_TEST_DIR}/shape.cpp)
+add_gtest(${PROJECT_TEST_DIR}/activations/activation.cpp)
 
 gtest_discover_tests(testMain)
