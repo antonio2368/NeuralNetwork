@@ -22,10 +22,7 @@ enum class TensorType : std::uint8_t
 namespace
 {
     template< TensorType type >
-    constexpr bool isView() noexcept
-    {
-        return type == TensorType::view || type == TensorType::constView;
-    }
+    constexpr bool isView = type == TensorType::view || type == TensorType::constView;
 }
 
 template< typename TensorElementType, typename TensorShape, TensorType type = TensorType::regular >
@@ -39,34 +36,38 @@ public:
     static_assert( Shape::isValid(), "All shape sizes should be numbers greater than 0." );
     static_assert( std::is_arithmetic_v< ElementType >, "Tensor can hold only arithmetic types!" );
 private:
-    std::conditional_t< isView< type >(), memory::TensorContainerView< ElementType >, memory::TensorContainer< ElementType, Shape::numberOfElements() > > data_;
+    std::conditional_t< isView< type >, memory::TensorContainerView< ElementType >, memory::TensorContainer< ElementType, Shape::numberOfElements() > > data_;
 
-    template< TensorType TT = type >
-    constexpr Tensor( memory::TensorContainerView< ElementType > && containerView, std::enable_if_t< isView< TT >() > * = nullptr ) : data_{ std::move( containerView ) }
+    template< TensorType TT = type, typename = std::enable_if_t< isView< TT > > >
+    constexpr Tensor( memory::TensorContainerView< ElementType > && containerView ) : data_{ std::move( containerView ) }
     {}
 
 public:
-    template< TensorType TT = type, template< typename = ElementType > class Initializer = initializer::ZeroInitializer >
+    template
+    <
+        TensorType TT = type,
+        template< typename = ElementType > class Initializer = initializer::ZeroInitializer,
+        typename = std::enable_if_t< !isView< TT > && initializer::is_initializer_v< Initializer< ElementType > > >
+    >
     explicit constexpr Tensor
     (
-        Initializer< ElementType > const & initializer = initializer::ZeroInitializer< ElementType >{},
-        std::enable_if_t< !isView< TT >() && initializer::is_initializer_v< Initializer< ElementType > > > * = nullptr
+        Initializer< ElementType > const & initializer = initializer::ZeroInitializer< ElementType >{}
     )
         : data_{ initializer }
     {}
 
-    template< TensorType TT = type >
-    explicit constexpr Tensor( ranges::span< ElementType const > const span, std::enable_if_t< !isView< TT >() > * = nullptr )
+    template< TensorType TT = type, typename = std::enable_if_t< !isView< TT > > >
+    explicit constexpr Tensor( ranges::span< ElementType const > const span )
         : data_{ span }
     {}
 
-    template< TensorType TT = type >
-    constexpr Tensor( std::initializer_list< ElementType > const initList, std::enable_if_t< !isView< TT >() > * = nullptr )
+    template< TensorType TT = type, typename = std::enable_if_t< !isView< TT > > >
+    constexpr Tensor( std::initializer_list< ElementType > const initList )
         : data_{ initList }
     {}
 
-    template< TensorType TT = type, TensorType otherTensorType >
-    explicit constexpr Tensor( Tensor< ElementType, Shape, otherTensorType > const & other, std::enable_if_t< !isView< TT >() > * = nullptr )
+    template< TensorType TT = type, TensorType otherTensorType, typename = std::enable_if_t< !isView< TT > > >
+    explicit constexpr Tensor( Tensor< ElementType, Shape, otherTensorType > const & other )
         : data_{ other.data_ }
     {}
 
@@ -81,8 +82,8 @@ public:
         return *this;
     }
 
-    template< TensorType TT = type  >
-    constexpr Tensor( Tensor< ElementType, Shape, TensorType::regular > && other, std::enable_if_t< !isView< TT >() > * = nullptr  )
+    template< TensorType TT = type, typename = std::enable_if_t< !isView< TT > >  >
+    constexpr Tensor( Tensor< ElementType, Shape, TensorType::regular > && other  )
         : data_{ std::move( other.data_ ) }
     {}
 
