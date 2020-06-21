@@ -171,4 +171,11 @@ template< typename ElementType, typename Shape, TensorType type > struct is_tens
 template< typename Tensor >
 inline constexpr bool is_tensor_v = is_tensor< Tensor >::value;
 
+template< typename, typename > struct is_same_shape_tensor : std::false_type {};
+template< typename ElementType, typename Shape, TensorType tensorType1, TensorType tensorType2 >
+struct is_same_shape_tensor< Tensor< ElementType, Shape, tensorType1 >, Tensor< ElementType, Shape, tensorType2 > > : std::true_type{};
+
+template< typename Tensor1, typename Tensor2 >
+inline constexpr bool is_same_shape_tensor_v = is_same_shape_tensor< Tensor1, Tensor2 >::value;
+
 } // namespace nn

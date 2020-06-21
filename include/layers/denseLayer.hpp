@@ -28,8 +28,8 @@ protected:
     using BiasTensor = Tensor< ElementType, Shape< outputNumber > >;
 
     template< typename T >
-    inline static constexpr bool isValidBiasInitializer = std::is_same_v< std::decay_t< T >, BiasTensor > ||
-                                                          initializer::is_initializer_v< std::decay_t< T > >;
+    inline static constexpr bool isValidBiasInitializer = initializer::is_initializer_v< std::decay_t< T > > ||
+                                                          is_same_shape_tensor_v< std::decay_t< T >, BiasTensor >;
 
     template
     <
@@ -38,7 +38,7 @@ protected:
     >
     explicit constexpr DenseLayerBias
     (
-        BiasInitializer && biasInitializer
+        BiasInitializer && biasInitializer = initializer::ZeroInitializer< ElementType >{}
     )
     : bias_{ std::forward< BiasInitializer >( biasInitializer ) }
     {}
@@ -71,7 +71,7 @@ private:
     using OutputShape = Shape< InputShape::size( 0 ), outputNumber >;
 
     template< typename T >
-    inline static constexpr bool isValidWeightInitializer = std::is_same_v< std::decay_t< T >, WeightsTensor > ||
+    inline static constexpr bool isValidWeightInitializer = is_same_shape_tensor_v< std::decay_t< T >, WeightsTensor > ||
                                                             initializer::is_initializer_v< std::decay_t< T > >;
 
 public:
