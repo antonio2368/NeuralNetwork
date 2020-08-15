@@ -37,7 +37,6 @@ public:
     static_assert( std::is_arithmetic_v< ElementType >, "Tensor can hold only arithmetic types!" );
 private:
     std::conditional_t< isView< type >, memory::TensorContainerView< ElementType >, memory::TensorContainer< ElementType, Shape::numberOfElements() > > data_;
-
     template< TensorType TT = type, typename = std::enable_if_t< isView< TT > > >
     constexpr Tensor( memory::TensorContainerView< ElementType > && containerView ) : data_{ std::move( containerView ) }
     {}
@@ -117,7 +116,7 @@ public:
     >
     operator[]( std::size_t const ix ) const noexcept
     {
-        assert( ix < Shape::size( 0 ) );
+        assert( ix < static_cast< std::size_t >( Shape::size( 0 ) ) );
         if constexpr ( Shape::dimensions() == 1 )
         {
             return data_[ ix ];
@@ -138,7 +137,7 @@ public:
     >
     operator[]( std::size_t const ix ) noexcept
     {
-        assert( ix < Shape::size( 0 ) );
+        assert( ix < static_cast< std::size_t >( Shape::size( 0 ) ) );
         if constexpr ( Shape::dimensions() == 1 )
         {
             return data_[ ix ];

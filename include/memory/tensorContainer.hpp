@@ -11,6 +11,7 @@
 #include <optional>
 #include <cassert>
 #include <algorithm>
+#include <cstring>
 
 namespace nn::memory
 {
